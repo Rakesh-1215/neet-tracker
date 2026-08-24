@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>NEET 2027: Streak Tracker Pro 🔥</title>
+  <style>
+    :root {
+      --primary: #0077b6;
+      --success: #2a9d8f;
+      --danger: #e76f51;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --c11: #4361ee;
+      --c12: #7209b7;
+      --physics: #3b82f6;
+      --chemistry: #10b981;
+      --botony: #8b5cf6;
+      --zoology: #f59e0b;
+      --streak: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      padding: 10px;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      margin-bottom: 14px;
+      border: 1px solid #eef2f6;
+      transition: 0.2s;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .quote-box {
+      font-style: italic;
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 5px;
+      min-height: 1.2em;
+    }
+
+    .streak-card {
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      border: 2px solid #fed7aa;
+    }
+
+    .streak-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .streak-main {
+      text-align: center;
+      flex: 1;
+    }
+
+    .streak-number {
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--streak);
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .streak-label {
+      font-size: 12px;
+      color: #92400e;
+      margin-top: 5px;
+    }
+
+    .streak-status {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      background: white;
+      border-radius: 16px;
+    }
+
+    .streak-badge {
+      font-size: 28px;
+    }
+
+    .best-streak {
+      font-size: 13px;
+      color: #78350f;
+      margin-top: 8px;
+    }
+
+    .prog-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .bar-bg {
+      background: #edf2f7;
+      border-radius: 12px;
+      height: 22px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      transition: width 0.6s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .grid-7 {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .day-node {
+      padding: 6px 2px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      transition: 0.2s;
+    }
+
+    .d-name {
+      font-size: 9px;
+      color: #94a3b8;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .d-val {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .section-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin: 10px 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 4px solid var(--primary);
+      padding-left: 10px;
+    }
+
+    .class-toggle-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin: 8px 0;
+    }
+
+    .class-btn {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #cbd5e1;
+      background: white;
+      border-radius: 40px;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #334155;
+    }
+
+    .class-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .class-btn[data-class="11"].active {
+      background: var(--c11);
+      border-color: var(--c11);
+    }
+
+    .class-btn[data-class="12"].active {
+      background: var(--c12);
+      border-color: var(--c12);
+    }
+
+    .selected-class-hint {
+      font-size: 12px;
+      text-align: center;
+      margin-top: 4px;
+      color: #475569;
+      background: #f1f5f9;
+      padding: 4px 8px;
+      border-radius: 20px;
+      display: inline-block;
+      width: auto;
+    }
+
+    .subject-select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      font-size: 16px;
+      background: white;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23334155' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    .subject-select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.1);
+    }
+
+    .subject-tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    .subject-tag.physics { background: #dbeafe; color: #1e40af; }
+    .subject-tag.chemistry { background: #d1fae5; color: #065f46; }
+    .subject-tag.botony { background: #ede9fe; color: #5b21b6; }
+    .subject-tag.zoology { background: #fef3c7; color: #92400e; }
+
+    .subj-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .subj-card {
+      flex: 1;
+      background: #f1f5f9;
+      border-radius: 16px;
+      padding: 10px 5px;
+      text-align: center;
+      transition: 0.2s;
+      min-width: 60px;
+    }
+
+    .subj-label {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .subj-badge {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 4px 0;
+    }
+
+    .q-input-field {
+      width: 80px;
+      margin: 8px auto 0;
+      text-align: center;
+      padding: 8px 6px;
+      font-size: 16px;
+      font-weight: 600;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 30px;
+      background: white;
+      display: block;
+    }
+
+    .q-input-field:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .reset-q-btn {
+      background: none;
+      border: none;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 6px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    input,
+    select,
+    button {
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .btn-add {
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-weight: bold;
+      margin-top: 5px;
+      cursor: pointer;
+    }
+
+    .btn-add:hover {
+      opacity: 0.9;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: #fff;
+      border-radius: 14px;
+      margin-bottom: 8px;
+      border: 1px solid #f1f5f9;
+      transition: 0.1s;
+    }
+
+    .task-info {
+      flex: 1;
+    }
+
+    .task-title {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .task-meta {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .checked {
+      text-decoration: line-through;
+      color: #94a3b8;
+    }
+
+    .cb {
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+    }
+
+    .btn-del {
+      background: #fee2e2;
+      color: var(--danger);
+      border: none;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .completed-task-msg {
+      font-size: 10px;
+      color: var(--success);
+      font-weight: 500;
+      margin-left: 4px;
+    }
+
+    .btn-excel {
+      width: 100%;
+      background: #217346;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 12px;
+      font-weight: bold;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .flex-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn-secondary {
+      background: #334155;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .error-banner {
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .fix-data-btn {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    .weekly-summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .week-card {
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 14px;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+    }
+
+    .week-card.current {
+      border: 2px solid var(--primary);
+      background: #f0f9ff;
+    }
+
+    .week-card.last {
+      border: 2px solid #94a3b8;
+      background: #f8fafc;
+    }
+
+    .week-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .week-total {
+      font-size: 28px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 4px 0;
+    }
+
+    .week-detail {
+      font-size: 10px;
+      color: #475569;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .week-detail span {
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: white;
+    }
+
+    .week-trend {
+      font-size: 12px;
+      margin-top: 4px;
+      padding: 2px 10px;
+      border-radius: 12px;
+      display: inline-block;
+    }
+
+    .trend-up { color: #16a34a; background: #dcfce7; }
+    .trend-down { color: #dc2626; background: #fee2e2; }
+    .trend-same { color: #64748b; background: #f1f5f9; }
+
+    .progress-indicator {
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .progress-indicator .fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div id="errorBanner" style="display: none;" class="error-banner"></div>
+    
+    <header>
+      <h2 style="margin:0; color: #1e293b;">📘 NEET Master Pro</h2>
+      <div class="quote-box" id="quote"></div>
+    </header>
+
+    <div class="card streak-card">
+      <div class="streak-container">
+        <div class="streak-main">
+          <div class="streak-number">
+            <span>🔥</span>
+            <span id="currentStreak">0</span>
+          </div>
+          <div class="streak-label">Current Streak (days)</div>
+        </div>
+        <div class="streak-status">
+          <div class="streak-badge" id="streakEmoji">😴</div>
+          <div class="best-streak" id="bestStreakText">Best: 0 days</div>
+        </div>
+      </div>
+      <div class="best-streak" style="text-align: center; margin-top: 10px;" id="streakMessage">
+        Complete a task or solve questions today to start your streak! 💪
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="prog-label"><span>🧪 11th (15h Goal)</span><span id="txt11">0/15h</span></div>
+      <div class="bar-bg">
+        <div id="bar11" class="bar-fill" style="background:var(--c11)">0%</div>
+      </div>
+      <div class="prog-label"><span>⚗️ 12th (20h Goal)</span><span id="txt12">0/20h</span></div>
+      <div class="bar-bg">
+        <div id="bar12" class="bar-fill" style="background:var(--c12)">0%</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📅 Daily Study Hours</div>
+      <div class="grid-7" id="dailyGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">✅ Question Counter (Today's Progress)</div>
+      <div id="subjectQuestionPanel">
+        <div class="subj-grid">
+          <div class="subj-card" style="border-top: 3px solid var(--physics);">
+            <div class="subj-label">⚡ Physics</div>
+            <div class="subj-badge" id="physicsCount">0</div>
+            <input type="number" id="physicsInput" class="q-input-field" value="0" min="0" step="1" placeholder="Count">
+          </div>
+          <div class="subj-card" style="border-top: 3px solid var(--chemistry);">
+            <div class="subj-label">🧪 Chemistry</div>
+            <div class="subj-badge" id="chemistryCount">0</div>
+            <input type="number" id="chemistryInput" class="q-input-field" value="0" min="0" step="1" placeholder="Count">
+          </div>
+          <div class="subj-card" style="border-top: 3px solid var(--botony);">
+            <div class="subj-label">🌿 Botony</div>
+            <div class="subj-badge" id="botonyCount">0</div>
+            <input type="number" id="botonyInput" class="q-input-field" value="0" min="0" step="1" placeholder="Count">
+          </div>
+          <div class="subj-card" style="border-top: 3px solid var(--zoology);">
+            <div class="subj-label">🐾 Zoology</div>
+            <div class="subj-badge" id="zoologyCount">0</div>
+            <input type="number" id="zoologyInput" class="q-input-field" value="0" min="0" step="1" placeholder="Count">
+          </div>
+        </div>
+        <button class="reset-q-btn" id="resetTodayQuestions">🔄 Reset today's questions</button>
+      </div>
+
+      <div style="margin-top: 12px; padding-top: 12px; border-top: 2px dashed #e2e8f0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-weight: 700; font-size: 14px;">📊 Weekly Question Summary</span>
+          <span id="weekRange" style="font-size: 11px; color: #94a3b8;"></span>
+        </div>
+        
+        <div class="weekly-summary">
+          <div class="week-card current">
+            <div class="week-label">📌 This Week</div>
+            <div class="week-total" id="currentWeekTotal">0</div>
+            <div class="week-detail" id="currentWeekDetail">
+              <span>⚡0</span>
+              <span>🧪0</span>
+              <span>🌿0</span>
+              <span>🐾0</span>
+            </div>
+            <div class="progress-indicator">
+              <div class="fill" id="currentWeekProgress" style="width: 0%;"></div>
+            </div>
+          </div>
+          
+          <div class="week-card last">
+            <div class="week-label">📌 Last Week</div>
+            <div class="week-total" id="lastWeekTotal">0</div>
+            <div class="week-detail" id="lastWeekDetail">
+              <span>⚡0</span>
+              <span>🧪0</span>
+              <span>🌿0</span>
+              <span>🐾0</span>
+            </div>
+            <div id="weekTrend" class="week-trend trend-same">↔ Same</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size: 11px; color: #475569; margin-top: 8px; background:#f8fafc; padding:6px; border-radius:12px; text-align:center;">
+        📌 Questions solved today: <strong id="totalQuestionsToday">0</strong> | Weekly questions: <strong id="weeklyTotalQ">0</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📝 Weekly Study Plan (Hours)</div>
+      <div class="input-row">
+        <input type="text" id="desc" placeholder="Topic (e.g. Optics, Thermodynamics)">
+        <select id="subjectSelect" class="subject-select">
+          <option value="Physics">⚡ Physics</option>
+          <option value="Chemistry">🧪 Chemistry</option>
+          <option value="Botony">🌿 Botony</option>
+          <option value="Zoology">🐾 Zoology</option>
+        </select>
+        <div class="class-toggle-group">
+          <button type="button" id="class11Btn" class="class-btn active" data-class="11">📘 Class 11</button>
+          <button type="button" id="class12Btn" class="class-btn" data-class="12">📗 Class 12</button>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <input type="number" id="hrs" placeholder="Hours (e.g. 2.5)" style="flex:1">
+          <div class="selected-class-hint" id="selectedClassHint">Selected: Class 11</div>
+        </div>
+        <button class="btn-add" onclick="addTask()">+ Add Goal</button>
+      </div>
+      <div id="taskList" style="margin-top: 12px;"></div>
+
+      <div class="flex-btns">
+        <button class="btn-excel" onclick="exportToExcel()" style="margin-top:0;">📎 CSV Export</button>
+        <button onclick="manualReset()" class="btn-secondary" style="background:#475569;">🗑️ Reset Week</button>
+        <button onclick="repairData()" class="btn-secondary" style="background:#dc2626;">🔧 Repair Data</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =============================================
+    // FIXED: Chemistry counter now works correctly!
+    // =============================================
+    
+    function getWeekNumber(d) {
+      d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+      return Math.ceil((((d - new Date(Date.UTC(d.getUTCFullYear(), 0, 1))) / 86400000) + 1) / 7);
+    }
+
+    function getWeekRange(weekOffset = 0) {
+      const now = new Date();
+      const day = now.getDay() || 7;
+      const diff = (day - 1) + (weekOffset * 7);
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - diff);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      return { monday, sunday };
+    }
+
+    function getWeekDateRange(weekOffset = 0) {
+      const { monday, sunday } = getWeekRange(weekOffset);
+      const options = { month: 'short', day: 'numeric' };
+      return `${monday.toLocaleDateString('en-US', options)} - ${sunday.toLocaleDateString('en-US', options)}`;
+    }
+
+    function createFreshData() {
+      const freshData = {
+        weekId: getWeekNumber(new Date()),
+        tasks: [],
+        dailyLog: { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
+        questionLog: {},
+        streakData: {
+          currentStreak: 0,
+          bestStreak: 0,
+          lastActiveDate: null,
+          streakHistory: {}
+        },
+        lastWeekQuestions: { physics: 0, chemistry: 0, botony: 0, zoology: 0, total: 0 }
+      };
+      for (let i = 0; i < 7; i++) {
+        freshData.questionLog[i] = { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+      }
+      return freshData;
+    }
+
+    function validateAndRepairData(data) {
+      if (!data || typeof data !== 'object') {
+        console.warn('Data corrupted, creating fresh data');
+        return createFreshData();
+      }
+      
+      if (!data.hasOwnProperty('weekId')) data.weekId = getWeekNumber(new Date());
+      if (!data.hasOwnProperty('tasks')) data.tasks = [];
+      if (!data.hasOwnProperty('dailyLog')) data.dailyLog = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+      if (!data.hasOwnProperty('questionLog')) data.questionLog = {};
+      if (!data.hasOwnProperty('lastWeekQuestions')) {
+        data.lastWeekQuestions = { physics: 0, chemistry: 0, botony: 0, zoology: 0, total: 0 };
+      }
+      
+      if (!data.hasOwnProperty('streakData')) {
+        data.streakData = { currentStreak: 0, bestStreak: 0, lastActiveDate: null, streakHistory: {} };
+      }
+      
+      for (let i = 0; i < 7; i++) {
+        if (typeof data.dailyLog[i] !== 'number' || isNaN(data.dailyLog[i])) {
+          data.dailyLog[i] = 0;
+        }
+      }
+      
+      for (let i = 0; i < 7; i++) {
+        if (!data.questionLog[i] || typeof data.questionLog[i] !== 'object') {
+          data.questionLog[i] = { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+        } else {
+          if (typeof data.questionLog[i].physics !== 'number') data.questionLog[i].physics = 0;
+          if (typeof data.questionLog[i].chemistry !== 'number') data.questionLog[i].chemistry = 0;
+          if (typeof data.questionLog[i].botony !== 'number') data.questionLog[i].botony = 0;
+          if (typeof data.questionLog[i].zoology !== 'number') data.questionLog[i].zoology = 0;
+        }
+      }
+      
+      if (Array.isArray(data.tasks)) {
+        data.tasks = data.tasks.filter(task => task && typeof task === 'object').map(task => ({
+          id: task.id || Date.now() + Math.random(),
+          desc: task.desc || 'Unknown',
+          subject: task.subject || 'Physics',
+          hrs: typeof task.hrs === 'number' ? task.hrs : 0,
+          cls: (task.cls === '11' || task.cls === '12') ? task.cls : '11',
+          completed: !!task.completed,
+          completedOn: typeof task.completedOn === 'number' ? task.completedOn : null
+        }));
+      } else {
+        data.tasks = [];
+      }
+      
+      return data;
+    }
+
+    let db;
+    try {
+      const saved = localStorage.getItem('neetMaster_v10');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        db = validateAndRepairData(parsed);
+        
+        const currentWeek = getWeekNumber(new Date());
+        if (db.weekId !== currentWeek) {
+          console.log('📅 New week detected! Saving last week data and resetting...');
+          
+          let lastWeekTotal = 0;
+          let lastWeekSubjects = { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+          for (let i = 0; i < 7; i++) {
+            const q = db.questionLog[i] || { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+            lastWeekSubjects.physics += q.physics || 0;
+            lastWeekSubjects.chemistry += q.chemistry || 0;
+            lastWeekSubjects.botony += q.botony || 0;
+            lastWeekSubjects.zoology += q.zoology || 0;
+          }
+          lastWeekTotal = lastWeekSubjects.physics + lastWeekSubjects.chemistry + lastWeekSubjects.botony + lastWeekSubjects.zoology;
+          
+          db.lastWeekQuestions = {
+            physics: lastWeekSubjects.physics,
+            chemistry: lastWeekSubjects.chemistry,
+            botony: lastWeekSubjects.botony,
+            zoology: lastWeekSubjects.zoology,
+            total: lastWeekTotal
+          };
+          
+          const preservedStreak = db.streakData;
+          
+          db.tasks = [];
+          db.dailyLog = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+          db.questionLog = {};
+          for (let i = 0; i < 7; i++) {
+            db.questionLog[i] = { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+          }
+          db.weekId = currentWeek;
+          db.streakData = preservedStreak;
+          
+          console.log('✅ Last week questions saved:', db.lastWeekQuestions);
+          console.log('✅ Streak preserved:', db.streakData.currentStreak, 'days');
+        }
+      } else {
+        db = createFreshData();
+      }
+    } catch (e) {
+      console.error('Failed to load data:', e);
+      db = createFreshData();
+      showError('Data was corrupted and has been repaired automatically.');
+    }
+
+    function showError(msg) {
+      const banner = document.getElementById('errorBanner');
+      if (banner) {
+        banner.innerHTML = msg + ' <button onclick="repairData()" class="fix-data-btn">Fix Now</button>';
+        banner.style.display = 'block';
+        setTimeout(() => {
+          banner.style.display = 'none';
+        }, 8000);
+      }
+    }
+
+    function repairData() {
+      const preservedStreak = db.streakData;
+      const preservedLastWeek = db.lastWeekQuestions;
+      db = createFreshData();
+      db.streakData = preservedStreak;
+      db.lastWeekQuestions = preservedLastWeek;
+      saveToLocal();
+      showError('Data has been repaired while preserving your streak and last week data!');
+      render();
+    }
+
+    window.repairData = repairData;
+
+    const daysArr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const quotes = ["Earn the stethoscope.", "Be the doctor you'd want.", "Class 11 is foundation.", "Precision in Physics, speed in Bio.", "Chemistry is the score booster.", "35 Hours is just the beginning.", "Stay focused, Dr. NEET."];
+    const subjectColors = {
+      'Physics': 'physics',
+      'Chemistry': 'chemistry',
+      'Botony': 'botony',
+      'Zoology': 'zoology'
+    };
+    const subjectEmojis = {
+      'Physics': '⚡',
+      'Chemistry': '🧪',
+      'Botony': '🌿',
+      'Zoology': '🐾'
+    };
+
+    let currentSelectedClass = "11";
+
+    function initClassToggle() {
+      const class11Btn = document.getElementById('class11Btn');
+      const class12Btn = document.getElementById('class12Btn');
+      const hintSpan = document.getElementById('selectedClassHint');
+      
+      function updateButtonsUI() {
+        if (currentSelectedClass === "11") {
+          class11Btn.classList.add('active');
+          class12Btn.classList.remove('active');
+          if (hintSpan) hintSpan.innerHTML = '📘 Selected: Class 11';
+        } else {
+          class12Btn.classList.add('active');
+          class11Btn.classList.remove('active');
+          if (hintSpan) hintSpan.innerHTML = '📗 Selected: Class 12';
+        }
+      }
+      
+      if (class11Btn) class11Btn.addEventListener('click', () => { currentSelectedClass = "11"; updateButtonsUI(); });
+      if (class12Btn) class12Btn.addEventListener('click', () => { currentSelectedClass = "12"; updateButtonsUI(); });
+      updateButtonsUI();
+    }
+
+    function getSelectedClass() { return currentSelectedClass; }
+    function getTodayIndex() { return new Date().getDay(); }
+    function getTodayDateStr() { return new Date().toDateString(); }
+
+    function checkTodayActivity() {
+      const today = getTodayIndex();
+      const todayData = db.questionLog[today] || { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+      const totalQuestionsToday = (todayData.physics || 0) + (todayData.chemistry || 0) + (todayData.botony || 0) + (todayData.zoology || 0);
+      const tasksCompletedToday = db.tasks.some(task => task.completed && task.completedOn === today);
+      return totalQuestionsToday > 0 || tasksCompletedToday;
+    }
+
+    function updateStreak() {
+      const todayStr = getTodayDateStr();
+      const hasActivityToday = checkTodayActivity();
+      
+      if (hasActivityToday) {
+        if (!db.streakData.streakHistory[todayStr]) {
+          db.streakData.streakHistory[todayStr] = true;
+          
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toDateString();
+          
+          if (db.streakData.lastActiveDate === yesterdayStr) {
+            db.streakData.currentStreak++;
+          } else {
+            db.streakData.currentStreak = 1;
+          }
+          
+          db.streakData.lastActiveDate = todayStr;
+          
+          if (db.streakData.currentStreak > db.streakData.bestStreak) {
+            db.streakData.bestStreak = db.streakData.currentStreak;
+          }
+          
+          console.log(`🔥 Streak updated: ${db.streakData.currentStreak} days (Best: ${db.streakData.bestStreak})`);
+        }
+      }
+      
+      saveToLocal();
+      renderStreakUI();
+    }
+
+    function renderStreakUI() {
+      document.getElementById('currentStreak').innerText = db.streakData.currentStreak;
+      document.getElementById('bestStreakText').innerHTML = `🏆 Best: ${db.streakData.bestStreak} days`;
+      
+      const streakEmoji = document.getElementById('streakEmoji');
+      const streakMsg = document.getElementById('streakMessage');
+      
+      if (db.streakData.currentStreak === 0) {
+        streakEmoji.innerHTML = '😴';
+        streakMsg.innerHTML = 'Complete a task or solve questions today to start your streak! 💪';
+      } else if (db.streakData.currentStreak < 3) {
+        streakEmoji.innerHTML = '🌱';
+        streakMsg.innerHTML = `Great start! ${db.streakData.currentStreak} day streak! Keep going! 🔥`;
+      } else if (db.streakData.currentStreak < 7) {
+        streakEmoji.innerHTML = '⚡';
+        streakMsg.innerHTML = `Awesome! ${db.streakData.currentStreak} day streak! You're on fire! 🔥`;
+      } else if (db.streakData.currentStreak < 14) {
+        streakEmoji.innerHTML = '🏅';
+        streakMsg.innerHTML = `Incredible! ${db.streakData.currentStreak} day streak! NEET ready! 🎯`;
+      } else if (db.streakData.currentStreak < 30) {
+        streakEmoji.innerHTML = '🌟';
+        streakMsg.innerHTML = `Amazing! ${db.streakData.currentStreak} day streak! You're unstoppable! 🚀`;
+      } else if (db.streakData.currentStreak < 60) {
+        streakEmoji.innerHTML = '👑';
+        streakMsg.innerHTML = `LEGENDARY! ${db.streakData.currentStreak} day streak! Doctor in making! 🩺`;
+      } else {
+        streakEmoji.innerHTML = '🏆';
+        streakMsg.innerHTML = `🔥 MEGA STREAK! ${db.streakData.currentStreak} days! NEET Champion! ⭐`;
+      }
+    }
+
+    // FIXED: Chemistry update function with correct mapping
+    function updateQuestionFromInput(subject, inputElement) {
+      let rawValue = parseInt(inputElement.value, 10);
+      if (isNaN(rawValue) || rawValue < 0) rawValue = 0;
+      const today = getTodayIndex();
+      if (!db.questionLog[today]) db.questionLog[today] = { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+      
+      // Map the subject to the correct key
+      const subjectMap = {
+        'physics': 'physics',
+        'chemistry': 'chemistry',
+        'botony': 'botony',
+        'zoology': 'zoology'
+      };
+      const key = subjectMap[subject.toLowerCase()] || subject.toLowerCase();
+      db.questionLog[today][key] = rawValue;
+      
+      saveToLocal();
+      renderQuestionPanel();
+      render();
+      updateStreak();
+    }
+
+    function resetTodayQuestions() {
+      const today = getTodayIndex();
+      db.questionLog[today] = { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+      const inputs = ['physicsInput', 'chemistryInput', 'botonyInput', 'zoologyInput'];
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = 0;
+      });
+      saveToLocal();
+      renderQuestionPanel();
+      render();
+      updateStreak();
+    }
+
+    function getWeeklyTotalQuestions() {
+      let total = 0;
+      for (let i = 0; i < 7; i++) {
+        const q = db.questionLog[i];
+        if (q) total += (q.physics || 0) + (q.chemistry || 0) + (q.botony || 0) + (q.zoology || 0);
+      }
+      return total;
+    }
+
+    function getWeeklySubjectBreakdown() {
+      const breakdown = { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+      for (let i = 0; i < 7; i++) {
+        const q = db.questionLog[i];
+        if (q) {
+          breakdown.physics += q.physics || 0;
+          breakdown.chemistry += q.chemistry || 0;
+          breakdown.botony += q.botony || 0;
+          breakdown.zoology += q.zoology || 0;
+        }
+      }
+      return breakdown;
+    }
+
+    function renderWeeklySummary() {
+      const currentTotal = getWeeklyTotalQuestions();
+      const currentBreakdown = getWeeklySubjectBreakdown();
+      
+      document.getElementById('currentWeekTotal').innerText = currentTotal;
+      document.getElementById('currentWeekDetail').innerHTML = `
+        <span>⚡${currentBreakdown.physics}</span>
+        <span>🧪${currentBreakdown.chemistry}</span>
+        <span>🌿${currentBreakdown.botony}</span>
+        <span>🐾${currentBreakdown.zoology}</span>
+      `;
+
+      const weekRange = getWeekDateRange(0);
+      document.getElementById('weekRange').innerText = `Week: ${weekRange}`;
+
+      const lastWeek = db.lastWeekQuestions || { physics: 0, chemistry: 0, botony: 0, zoology: 0, total: 0 };
+      document.getElementById('lastWeekTotal').innerText = lastWeek.total || 0;
+      document.getElementById('lastWeekDetail').innerHTML = `
+        <span>⚡${lastWeek.physics || 0}</span>
+        <span>🧪${lastWeek.chemistry || 0}</span>
+        <span>🌿${lastWeek.botony || 0}</span>
+        <span>🐾${lastWeek.zoology || 0}</span>
+      `;
+
+      const trendEl = document.getElementById('weekTrend');
+      const lastTotal = lastWeek.total || 0;
+      if (currentTotal > lastTotal) {
+        const diff = currentTotal - lastTotal;
+        trendEl.className = 'week-trend trend-up';
+        trendEl.innerHTML = `📈 +${diff} questions vs last week`;
+      } else if (currentTotal < lastTotal) {
+        const diff = lastTotal - currentTotal;
+        trendEl.className = 'week-trend trend-down';
+        trendEl.innerHTML = `📉 -${diff} questions vs last week`;
+      } else {
+        trendEl.className = 'week-trend trend-same';
+        trendEl.innerHTML = '↔ Same as last week';
+      }
+
+      const maxVal = Math.max(currentTotal, lastTotal, 1);
+      const progressPercent = (currentTotal / maxVal) * 100;
+      document.getElementById('currentWeekProgress').style.width = Math.min(progressPercent, 100) + '%';
+    }
+
+    // FIXED: renderQuestionPanel with correct chemistry ID
+    function renderQuestionPanel() {
+      const today = getTodayIndex();
+      const todayData = db.questionLog[today] || { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+      document.getElementById('physicsCount').innerText = todayData.physics;
+      document.getElementById('chemistryCount').innerText = todayData.chemistry;
+      document.getElementById('botonyCount').innerText = todayData.botony;
+      document.getElementById('zoologyCount').innerText = todayData.zoology;
+
+      const mappings = [
+        { id: 'physicsInput', key: 'physics' },
+        { id: 'chemistryInput', key: 'chemistry' },
+        { id: 'botonyInput', key: 'botony' },
+        { id: 'zoologyInput', key: 'zoology' }
+      ];
+      mappings.forEach(({id, key}) => {
+        const el = document.getElementById(id);
+        if (el && parseInt(el.value,10) !== todayData[key]) el.value = todayData[key];
+      });
+
+      const totalToday = (todayData.physics || 0) + (todayData.chemistry || 0) + (todayData.botony || 0) + (todayData.zoology || 0);
+      document.getElementById('totalQuestionsToday').innerText = totalToday;
+      document.getElementById('weeklyTotalQ').innerText = getWeeklyTotalQuestions();
+
+      renderWeeklySummary();
+    }
+
+    // FIXED: bindQuestionDirectInputs with correct IDs
+    function bindQuestionDirectInputs() {
+      const subjects = ['physics', 'chemistry', 'botony', 'zoology'];
+      subjects.forEach(sub => {
+        const input = document.getElementById(sub + 'Input');
+        if (input) {
+          input.addEventListener('change', () => updateQuestionFromInput(sub, input));
+          input.addEventListener('input', () => {
+            let val = parseInt(input.value, 10);
+            if (isNaN(val)) val = 0;
+            if (val < 0) input.value = 0;
+          });
+        }
+      });
+      const resetBtn = document.getElementById('resetTodayQuestions');
+      if (resetBtn) resetBtn.onclick = () => resetTodayQuestions();
+    }
+
+    function addTask() {
+      const desc = document.getElementById('desc').value.trim();
+      const subject = document.getElementById('subjectSelect').value;
+      const hrs = parseFloat(document.getElementById('hrs').value);
+      const selectedClass = getSelectedClass();
+      
+      if (!desc || isNaN(hrs) || hrs <= 0) {
+        alert("Please enter topic, subject, and valid hours (>0)");
+        return;
+      }
+      
+      db.tasks.push({
+        id: Date.now(),
+        desc: desc,
+        subject: subject,
+        hrs: hrs,
+        cls: selectedClass,
+        completed: false,
+        completedOn: null
+      });
+      saveToLocal();
+      document.getElementById('desc').value = '';
+      document.getElementById('hrs').value = '';
+    }
+
+    function toggleTask(id) {
+      const task = db.tasks.find(x => x.id === id);
+      const day = getTodayIndex();
+      if (task) {
+        if (!task.completed) {
+          task.completed = true;
+          task.completedOn = day;
+          db.dailyLog[day] = (db.dailyLog[day] || 0) + task.hrs;
+        } else {
+          if (task.completedOn !== null) {
+            db.dailyLog[task.completedOn] = Math.max(0, (db.dailyLog[task.completedOn] || 0) - task.hrs);
+          }
+          task.completed = false;
+          task.completedOn = null;
+        }
+        saveToLocal();
+        updateStreak();
+      }
+    }
+
+    function deleteTask(id) {
+      const task = db.tasks.find(x => x.id === id);
+      if (task) {
+        if (task.completed && task.completedOn !== null) {
+          db.dailyLog[task.completedOn] = Math.max(0, (db.dailyLog[task.completedOn] || 0) - task.hrs);
+        }
+        db.tasks = db.tasks.filter(x => x.id !== id);
+        saveToLocal();
+        updateStreak();
+      }
+    }
+
+    function manualReset() {
+      if (confirm("⚠️ Reset entire week's data? (Streak will be preserved)")) {
+        let lastWeekTotal = 0;
+        let lastWeekSubjects = { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+        for (let i = 0; i < 7; i++) {
+          const q = db.questionLog[i] || { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+          lastWeekSubjects.physics += q.physics || 0;
+          lastWeekSubjects.chemistry += q.chemistry || 0;
+          lastWeekSubjects.botony += q.botony || 0;
+          lastWeekSubjects.zoology += q.zoology || 0;
+        }
+        lastWeekTotal = lastWeekSubjects.physics + lastWeekSubjects.chemistry + lastWeekSubjects.botony + lastWeekSubjects.zoology;
+        
+        db.lastWeekQuestions = {
+          physics: lastWeekSubjects.physics,
+          chemistry: lastWeekSubjects.chemistry,
+          botony: lastWeekSubjects.botony,
+          zoology: lastWeekSubjects.zoology,
+          total: lastWeekTotal
+        };
+        
+        const preservedStreak = db.streakData;
+        
+        db.tasks = [];
+        db.dailyLog = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+        db.questionLog = {};
+        for (let i = 0; i < 7; i++) {
+          db.questionLog[i] = { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+        }
+        db.weekId = getWeekNumber(new Date());
+        db.streakData = preservedStreak;
+        
+        saveToLocal();
+        const inputs = ['physicsInput', 'chemistryInput', 'botonyInput', 'zoologyInput'];
+        inputs.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = 0;
+        });
+        render();
+        alert('✅ Week reset! Last week data saved. Your streak of ' + db.streakData.currentStreak + ' days is preserved!');
+      }
+    }
+
+    function exportToExcel() {
+      let csvRows = [];
+      csvRows.push("=== STUDY HOURS TASKS ===");
+      csvRows.push("Topic,Subject,Hours,Class,Status,Day Completed");
+      db.tasks.forEach(t => {
+        const status = t.completed ? "Done" : "Pending";
+        const day = t.completed && t.completedOn !== null ? daysArr[t.completedOn] : "-";
+        csvRows.push(`"${t.desc}","${t.subject}",${t.hrs},Class ${t.cls},${status},${day}`);
+      });
+      
+      csvRows.push("", "=== WEEKLY QUESTION SUMMARY ===");
+      const currentBreakdown = getWeeklySubjectBreakdown();
+      const currentTotal = getWeeklyTotalQuestions();
+      const lastWeek = db.lastWeekQuestions || { physics: 0, chemistry: 0, botony: 0, zoology: 0, total: 0 };
+      
+      csvRows.push("This Week (Current):");
+      csvRows.push(`Physics,${currentBreakdown.physics}`);
+      csvRows.push(`Chemistry,${currentBreakdown.chemistry}`);
+      csvRows.push(`Botony,${currentBreakdown.botony}`);
+      csvRows.push(`Zoology,${currentBreakdown.zoology}`);
+      csvRows.push(`Total,${currentTotal}`);
+      
+      csvRows.push("Last Week:");
+      csvRows.push(`Physics,${lastWeek.physics || 0}`);
+      csvRows.push(`Chemistry,${lastWeek.chemistry || 0}`);
+      csvRows.push(`Botony,${lastWeek.botony || 0}`);
+      csvRows.push(`Zoology,${lastWeek.zoology || 0}`);
+      csvRows.push(`Total,${lastWeek.total || 0}`);
+      
+      csvRows.push("", "=== STREAK INFORMATION ===");
+      csvRows.push(`Current Streak,${db.streakData.currentStreak} days`);
+      csvRows.push(`Best Streak,${db.streakData.bestStreak} days`);
+      csvRows.push(`Last Active,${db.streakData.lastActiveDate || "Never"}`);
+      
+      csvRows.push("", "=== DAILY QUESTION LOG ===");
+      csvRows.push("Day,Physics,Chemistry,Botony,Zoology,Total");
+      for (let i = 0; i < 7; i++) {
+        const q = db.questionLog[i] || { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+        const total = (q.physics || 0) + (q.chemistry || 0) + (q.botony || 0) + (q.zoology || 0);
+        csvRows.push(`${daysArr[i]},${q.physics || 0},${q.chemistry || 0},${q.botony || 0},${q.zoology || 0},${total}`);
+      }
+      
+      csvRows.push("", "=== DAILY STUDY HOURS ===");
+      csvRows.push("Day,Total Hours");
+      for (let i = 0; i < 7; i++) {
+        csvRows.push(`${daysArr[i]},${(db.dailyLog[i] || 0).toFixed(1)}`);
+      }
+      
+      const csvContent = csvRows.join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `NEET_Complete_Log_Week_${db.weekId}.csv`);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+
+    function saveToLocal() {
+      try {
+        localStorage.setItem('neetMaster_v10', JSON.stringify(db));
+      } catch (e) {
+        console.error('Failed to save:', e);
+        showError('Failed to save data. Storage might be full.');
+      }
+      render();
+    }
+
+    function updateBar(cls, val, goal) {
+      const p = Math.min((val / goal) * 100, 100);
+      const bar = document.getElementById(`bar${cls}`);
+      if (bar) {
+        bar.style.width = p + '%';
+        bar.innerText = Math.round(p) + '%';
+      }
+      document.getElementById(`txt${cls}`).innerText = `${val}/${goal}h`;
+    }
+
+    function render() {
+      const list = document.getElementById('taskList');
+      if (!list) return;
+      list.innerHTML = '';
+      let total11 = 0, total12 = 0;
+
+      db.tasks.forEach(task => {
+        if (task.completed) {
+          if (task.cls === '11') total11 += task.hrs;
+          else total12 += task.hrs;
+        }
+        const isChecked = task.completed ? 'checked' : '';
+        const deleteButtonHtml = !task.completed 
+          ? `<button class="btn-del" onclick="deleteTask(${task.id})">✕</button>` 
+          : `<span class="completed-task-msg">✓ Done</span>`;
+        
+        const subjectClass = subjectColors[task.subject] || 'physics';
+        const subjectEmoji = subjectEmojis[task.subject] || '📚';
+
+        list.innerHTML += `<div class="task-item">
+                <input type="checkbox" class="cb" ${isChecked} onchange="toggleTask(${task.id})">
+                <div class="task-info">
+                    <span class="task-title ${task.completed ? 'checked' : ''}">${escapeHtml(task.desc)}</span>
+                    <div class="task-meta">
+                        <span>${subjectEmoji} ${task.subject}</span>
+                        <span>📘 Class ${task.cls}</span>
+                        <span>⏱ ${task.hrs}h</span>
+                        <span class="subject-tag ${subjectClass}">${task.subject}</span>
+                    </div>
+                </div>
+                ${deleteButtonHtml}
+            </div>`;
+      });
+
+      if (db.tasks.length === 0) {
+        list.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">➕ Add weekly goals above</div>';
+      }
+
+      updateBar('11', total11, 15);
+      updateBar('12', total12, 20);
+
+      const grid = document.getElementById('dailyGrid');
+      if (grid) {
+        grid.innerHTML = '';
+        for (let i = 0; i < 7; i++) {
+          const hours = (db.dailyLog[i] || 0).toFixed(1);
+          const isActive = (db.dailyLog[i] || 0) > 0;
+          grid.innerHTML += `<div class="day-node" style="border-color: ${isActive ? 'var(--success)' : '#e2e8f0'}">
+                <div class="d-name">${daysArr[i]}</div>
+                <div class="d-val">${hours}</div>
+            </div>`;
+        }
+      }
+
+      const quoteEl = document.getElementById('quote');
+      if (quoteEl) quoteEl.innerText = `"${quotes[getTodayIndex()]}"`;
+      
+      renderQuestionPanel();
+      renderStreakUI();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+
+    function init() {
+      initClassToggle();
+      bindQuestionDirectInputs();
+      const today = getTodayIndex();
+      const todayQ = db.questionLog[today] || { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
+      const mappings = [
+        { id: 'physicsInput', key: 'physics' },
+        { id: 'chemistryInput', key: 'chemistry' },
+        { id: 'botonyInput', key: 'botony' },
+        { id: 'zoologyInput', key: 'zoology' }
+      ];
+      mappings.forEach(({id, key}) => {
+        const el = document.getElementById(id);
+        if (el) el.value = todayQ[key] || 0;
+      });
+      updateStreak();
+      render();
+    }
+
+    window.addTask = addTask;
+    window.toggleTask = toggleTask;
+    window.deleteTask = deleteTask;
+    window.exportToExcel = exportToExcel;
+    window.manualReset = manualReset;
+    window.resetTodayQuestions = resetTodayQuestions;
+
+    init();
+  </script>
+</body>
+
+</html>

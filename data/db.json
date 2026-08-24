@@ -1,0 +1,66 @@
+{
+  "weekId": 34,
+  "tasks": [],
+  "dailyLog": { "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0 },
+  "questionLog": {
+    "0": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
+    "1": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
+    "2": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
+    "3": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
+    "4": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
+    "5": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
+    "6": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 }
+  },
+  "syllabusProgress": {},
+  "customChapters": [],
+  "mockTests": [
+    {
+      "id": 1700000000001,
+      "testName": "AAKASH OMT-01 (All India Open Mock)",
+      "testType": "OMT",
+      "testClass": "12",
+      "testDate": "2026-08-20",
+      "physics": 160,
+      "chemistry": 165,
+      "biology": 345,
+      "total": 670,
+      "percentage": "93.1",
+      "remarks": "Excellent overall accuracy in Open Mock Test."
+    },
+    {
+      "id": 1700000000002,
+      "testName": "AAKASH AIATS-01 (Class 11)",
+      "testType": "AIATS",
+      "testClass": "11",
+      "testDate": "2026-08-16",
+      "physics": 155,
+      "chemistry": 160,
+      "biology": 330,
+      "total": 645,
+      "percentage": "89.6",
+      "remarks": "Great speed in Biology. Need to revise Optics formulas for Physics."
+    },
+    {
+      "id": 1700000000003,
+      "testName": "AAKASH NRT-02 (NCERT Revision)",
+      "testType": "NRT",
+      "testClass": "12",
+      "testDate": "2026-08-09",
+      "physics": 145,
+      "chemistry": 155,
+      "biology": 340,
+      "total": 640,
+      "percentage": "88.9",
+      "remarks": "Silly calculation mistakes in Electrochemistry."
+    }
+  ],
+  "streakData": {
+    "currentStreak": 56,
+    "bestStreak": 56,
+    "lastActiveDate": "Sun Aug 23 2026",
+    "streakHistory": {
+      "Sun Aug 23 2026": true
+    }
+  },
+  "lastWeekQuestions": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0, "total": 0 }
+}
