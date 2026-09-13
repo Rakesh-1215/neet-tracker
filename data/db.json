@@ -1,17 +1,105 @@
 {
-  "weekId": 34,
-  "tasks": [],
-  "dailyLog": { "0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0 },
-  "questionLog": {
-    "0": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
-    "1": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
-    "2": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
-    "3": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
-    "4": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
-    "5": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 },
-    "6": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0 }
+  "weekId": 37,
+  "tasks": [
+    {
+      "id": 1789276348379,
+      "desc": "sdvdgsd",
+      "subject": "Physics",
+      "hrs": 2,
+      "cls": "11",
+      "completed": true,
+      "completedOn": "2026-09-13"
+    },
+    {
+      "id": 1789277449560,
+      "desc": "97fjy",
+      "subject": "Physics",
+      "hrs": 2,
+      "cls": "12",
+      "completed": true,
+      "completedOn": "2026-09-13"
+    }
+  ],
+  "dailyLog": {
+    "0": 0,
+    "1": 0,
+    "2": 0,
+    "3": 0,
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "2026-09-13": 4
   },
-  "syllabusProgress": {},
+  "questionLog": {
+    "0": {
+      "physics": 38,
+      "chemistry": 44,
+      "botony": 30,
+      "zoology": 60
+    },
+    "1": {
+      "physics": 0,
+      "chemistry": 0,
+      "botony": 0,
+      "zoology": 0
+    },
+    "2": {
+      "physics": 0,
+      "chemistry": 0,
+      "botony": 0,
+      "zoology": 0
+    },
+    "3": {
+      "physics": 0,
+      "chemistry": 0,
+      "botony": 0,
+      "zoology": 0
+    },
+    "4": {
+      "physics": 0,
+      "chemistry": 0,
+      "botony": 0,
+      "zoology": 0
+    },
+    "5": {
+      "physics": 0,
+      "chemistry": 0,
+      "botony": 0,
+      "zoology": 0
+    },
+    "6": {
+      "physics": 0,
+      "chemistry": 0,
+      "botony": 0,
+      "zoology": 0
+    },
+    "2026-09-13": {
+      "physics": 7,
+      "chemistry": 5,
+      "botony": 24,
+      "zoology": 0
+    }
+  },
+  "syllabusProgress": {
+    "p11_01": {
+      "theory": false,
+      "ncert": false,
+      "pyq": false,
+      "revisions": 0
+    },
+    "p11_02": {
+      "theory": false,
+      "ncert": false,
+      "pyq": false,
+      "revisions": 0
+    },
+    "p11_03": {
+      "theory": false,
+      "ncert": false,
+      "pyq": false,
+      "revisions": 0
+    }
+  },
   "customChapters": [],
   "mockTests": [
     {
@@ -55,12 +143,19 @@
     }
   ],
   "streakData": {
-    "currentStreak": 56,
-    "bestStreak": 56,
-    "lastActiveDate": "Sun Aug 23 2026",
+    "currentStreak": 1,
+    "bestStreak": 1,
+    "lastActiveDate": "2026-09-13",
     "streakHistory": {
-      "Sun Aug 23 2026": true
-    }
+      "2026-09-13": true
+    },
+    "criteriaVersion": 2
   },
-  "lastWeekQuestions": { "physics": 0, "chemistry": 0, "botony": 0, "zoology": 0, "total": 0 }
+  "lastWeekQuestions": {
+    "physics": 0,
+    "chemistry": 0,
+    "botony": 0,
+    "zoology": 0,
+    "total": 0
+  }
 }

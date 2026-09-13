@@ -865,3 +865,207 @@ body {
   text-align: center;
   font-size: 13px;
 }
+
+/* ============================================================
+   DASHBOARD UI POLISH
+   ============================================================ */
+
+/* Daily Study Hours Grid */
+.grid-7 {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.daily-day {
+  min-width: 0;
+  padding: 8px 4px 7px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  text-align: center;
+  transition: 0.2s ease;
+}
+
+.daily-day:hover {
+  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+}
+
+.daily-day-name {
+  font-size: 9px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.daily-bar-container {
+  height: 70px;
+  width: 18px;
+  margin: 0 auto 5px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.daily-bar {
+  width: 100%;
+  min-height: 0;
+  background: linear-gradient(to top, #0077b6, #38bdf8);
+  border-radius: 10px;
+  transition: height 0.4s ease;
+}
+
+.daily-hours {
+  font-size: 11px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.daily-date {
+  font-size: 8px;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+
+/* Dashboard Progress Card */
+#tab-dashboard > .card {
+  overflow: hidden;
+}
+
+#tab-dashboard .section-title {
+  margin-bottom: 14px;
+}
+
+/* Study-hour progress bars */
+#tab-dashboard .bar-bg {
+  height: 24px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+#tab-dashboard .bar-fill {
+  border-radius: 12px;
+}
+
+/* Question Cards */
+#tab-dashboard .subj-grid {
+  gap: 8px;
+}
+
+#tab-dashboard .subj-card {
+  min-width: 0;
+  padding: 11px 5px 10px;
+  border: 1px solid #e2e8f0;
+  border-top-width: 3px;
+  background: #f8fafc;
+  transition: 0.2s ease;
+}
+
+#tab-dashboard .subj-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+}
+
+#tab-dashboard .subj-label {
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+#tab-dashboard .subj-badge {
+  font-size: 24px;
+  line-height: 1.2;
+  margin: 4px 0;
+}
+
+#tab-dashboard .q-input-field {
+  width: 70px;
+  height: 32px;
+  padding: 4px 6px;
+  margin-top: 6px;
+}
+
+/* Weekly Summary */
+#tab-dashboard .weekly-summary-grid {
+  gap: 8px;
+}
+
+#tab-dashboard .week-card {
+  padding: 11px 8px;
+}
+
+#tab-dashboard .week-total {
+  margin: 2px 0;
+}
+
+#tab-dashboard .today-summary-footer {
+  border: 1px solid #e2e8f0;
+}
+
+/* Streak Card */
+.streak-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.streak-card::before {
+  content: "";
+  position: absolute;
+  top: -35px;
+  right: -35px;
+  width: 100px;
+  height: 100px;
+  background: rgba(245, 158, 11, 0.10);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Mobile dashboard */
+@media (max-width: 480px) {
+  .grid-7 {
+    gap: 4px;
+  }
+
+  .daily-day {
+    padding: 7px 2px 6px;
+    border-radius: 11px;
+  }
+
+  .daily-bar-container {
+    height: 58px;
+    width: 15px;
+  }
+
+  .daily-day-name {
+    font-size: 8px;
+  }
+
+  .daily-hours {
+    font-size: 10px;
+  }
+
+  .daily-date {
+    font-size: 7px;
+  }
+
+  #tab-dashboard .subj-grid {
+    gap: 6px;
+  }
+
+  #tab-dashboard .subj-label {
+    font-size: 10px;
+  }
+
+  #tab-dashboard .subj-badge {
+    font-size: 21px;
+  }
+
+  #tab-dashboard .q-input-field {
+    width: 62px;
+  }
+}

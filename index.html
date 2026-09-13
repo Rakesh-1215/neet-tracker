@@ -917,7 +917,14 @@
       const todayData = db.questionLog[today] || { physics: 0, chemistry: 0, botony: 0, zoology: 0 };
       const totalQuestionsToday = (todayData.physics || 0) + (todayData.chemistry || 0) + (todayData.botony || 0) + (todayData.zoology || 0);
       const tasksCompletedToday = db.tasks.some(task => task.completed && task.completedOn === today);
-      return totalQuestionsToday > 0 || tasksCompletedToday;
+      const dailyHours = db.dailyLog[today] || 0;
+      const activity = (totalQuestionsToday > 0 || tasksCompletedToday) && dailyHours >= 4;
+      console.log('checkTodayActivity -> totalQs:', totalQuestionsToday, 'tasksCompleted:', tasksCompletedToday, 'dailyHours:', dailyHours, 'activity:', activity);
+      const debugEl = document.getElementById('debugLog');
+      if (debugEl) {
+        debugEl.innerText = `checkTodayActivity: totalQs=${totalQuestionsToday}, tasksCompleted=${tasksCompletedToday}, dailyHours=${dailyHours}, activity=${activity}`;
+      }
+      return activity;
     }
 
     function updateStreak() {
