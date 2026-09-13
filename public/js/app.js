@@ -237,6 +237,19 @@ function updateStreak() {
 
   const streak = appState.db.streakData;
 
+  // Make sure streakHistory always exists
+  if (!streak.streakHistory || typeof streak.streakHistory !== "object") {
+    streak.streakHistory = {};
+  }
+
+  if (typeof streak.currentStreak !== "number") {
+    streak.currentStreak = Number(streak.currentStreak) || 0;
+  }
+
+  if (typeof streak.bestStreak !== "number") {
+    streak.bestStreak = Number(streak.bestStreak) || 0;
+  }
+
   // Reset old streak history because the criteria have changed
   if (streak.criteriaVersion !== STREAK_CRITERIA_VERSION) {
     streak.currentStreak = 0;
@@ -537,8 +550,11 @@ function renderSyllabus() {
       ch.title.toLowerCase().includes(searchQuery) ||
       (ch.category && ch.category.toLowerCase().includes(searchQuery));
     const matchesSubject =
-      subjectFilter === "all" || ch.subject === subjectFilter;
-    const matchesClass = classFilter === "all" || ch.class === classFilter;
+      subjectFilter === "all" ||
+      String(ch.subject).toLowerCase() === String(subjectFilter).toLowerCase();
+
+    const matchesClass =
+      classFilter === "all" || String(ch.class) === String(classFilter);
 
     if (matchesSearch && matchesSubject && matchesClass) {
       const isComplete =
