@@ -225,7 +225,7 @@ function checkTodayActivity() {
   };
 }
 
-function updateStreak() {
+function updateStreak() {function updateStreak() {
   if (!appState.db.streakData) {
     appState.db.streakData = {
       currentStreak: 0,
@@ -259,32 +259,127 @@ function updateStreak() {
   }
 
   const today = getTodayDateKey();
-  const yesterday = getDateKey(-1);
 
-  const activity = checkTodayActivity();
+  // ---------------------------------------------------------
+  // BUILD QUALIFIED DAYS FROM ACTUAL LOG DATA
+  // ---------------------------------------------------------
 
-  if (activity.qualified) {
-    // Prevent multiple updates on the same day
-    if (!streak.streakHistory[today]) {
-      if (streak.streakHistory[yesterday]) {
-        streak.currentStreak += 1;
+  const allDates = new Set([
+    ...Object.keys(appState.db.dailyLog || {}),
+    ...Object.keys(appState.db.questionLog || {}),
+  ]);
+
+  const qualifiedDates = {};
+
+  allDates.forEach((dateKey) => {
+    const qLog = appState.db.questionLog[dateKey] || {};
+
+    const totalQuestions =
+      (Number(qLog.physics) || 0) +
+      (Number(qLog.chemistry) || 0) +
+      (Number(qLog.botony) || 0) +
+      (Number(qLog.zoology) || 0);
+
+    const studyHours =
+      Number(appState.db.dailyLog[dateKey]) || 0;
+
+    if (
+      totalQuestions >= STREAK_MIN_QUESTIONS &&
+      studyHours >= STREAK_MIN_HOURS
+    ) {
+      qualifiedDates[dateKey] = true;
+    }
+  });
+
+  // Keep the existing streak history updated
+  streak.streakHistory = qualifiedDates;
+
+  // ---------------------------------------------------------
+  // CALCULATE CURRENT STREAK
+  // ---------------------------------------------------------
+
+  let currentStreak = 0;
+
+  // If today is completed, count from today.
+  // Otherwise count the already completed consecutive days
+  // ending yesterday.
+  let checkDate = today;
+
+  if (!qualifiedDates[today]) {
+    checkDate = getDateKey(-1);
+  }
+
+  while (qualifiedDates[checkDate]) {
+    currentStreak++;
+
+    const date = new Date(checkDate + "T00:00:00");
+    date.setDate(date.getDate() - 1);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    checkDate = `${year}-${month}-${day}`;
+  }
+
+  // ---------------------------------------------------------
+  // CALCULATE BEST STREAK FROM ALL HISTORICAL DATA
+  // ---------------------------------------------------------
+
+  const sortedDates = Object.keys(qualifiedDates).sort();
+
+  let runningStreak = 0;
+  let bestStreak = 0;
+  let previousDate = null;
+
+  for (const dateKey of sortedDates) {
+    if (previousDate === null) {
+      runningStreak = 1;
+    } else {
+      const previous = new Date(previousDate + "T00:00:00");
+      const current = new Date(dateKey + "T00:00:00");
+
+      const difference =
+        (current - previous) / (1000 * 60 * 60 * 24);
+
+      if (difference === 1) {
+        runningStreak++;
       } else {
-        streak.currentStreak = 1;
-      }
-
-      streak.streakHistory[today] = true;
-      streak.lastActiveDate = today;
-
-      if (streak.currentStreak > streak.bestStreak) {
-        streak.bestStreak = streak.currentStreak;
+        runningStreak = 1;
       }
     }
-  } else {
-    // Today does not qualify
-    delete streak.streakHistory[today];
 
-    streak.currentStreak = 0;
+    bestStreak = Math.max(bestStreak, runningStreak);
+    previousDate = dateKey;
   }
+
+  // ---------------------------------------------------------
+  // UPDATE STREAK DATA
+  // ---------------------------------------------------------
+
+  streak.currentStreak = currentStreak;
+
+  streak.bestStreak = Math.max(
+    Number(streak.bestStreak) || 0,
+    bestStreak,
+    currentStreak
+  );
+
+  const activeDates = Object.keys(qualifiedDates).sort();
+
+  streak.lastActiveDate =
+    activeDates.length > 0
+      ? activeDates[activeDates.length - 1]
+      : null;
+
+  console.log(
+    "🔥 Streak updated | Current:",
+    streak.currentStreak,
+    "| Best:",
+    streak.bestStreak,
+    "| Qualified days:",
+    activeDates.length
+  );
 
   saveStateBackend();
 
