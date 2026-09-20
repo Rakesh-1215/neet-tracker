@@ -225,7 +225,7 @@ function checkTodayActivity() {
   };
 }
 
-function updateStreak() {function updateStreak() {
+function updateStreak() {
   if (!appState.db.streakData) {
     appState.db.streakData = {
       currentStreak: 0,
