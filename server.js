@@ -10,7 +10,6 @@ const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
 
 // ============================================================
@@ -61,6 +60,12 @@ if (MONGODB_URI) {
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const SYLLABUS_FILE = path.join(DATA_DIR, 'syllabus.json');
+const DIST_DIR = path.join(__dirname, 'dist');
+const FRONTEND_DIR = fs.existsSync(DIST_DIR)
+  ? DIST_DIR
+  : path.join(__dirname, 'public');
+
+app.use(express.static(FRONTEND_DIR));
 
 
 // Ensure data directory exists
@@ -856,8 +861,7 @@ app.get('*', (req, res) => {
 
   res.sendFile(
     path.join(
-      __dirname,
-      'public',
+      FRONTEND_DIR,
       'index.html'
     )
   );
