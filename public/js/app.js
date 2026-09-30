@@ -38,6 +38,7 @@ const quotes = [
 ];
 
 let currentSelectedClass = "11";
+let selectedDateKey = null;
 
 // API Helpers
 async function loadState() {
@@ -155,6 +156,63 @@ function getTodayDateKey() {
   const day = String(now.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function formatSelectedDate(dateKey) {
+  const date = new Date(`${dateKey}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) return dateKey;
+
+  return date.toLocaleDateString(undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function renderSelectedDaySummary() {
+  const dateInput = document.getElementById("selectedDate");
+  const label = document.getElementById("selectedDayLabel");
+  const questionsEl = document.getElementById("selectedDayQuestions");
+  const hoursEl = document.getElementById("selectedDayHours");
+  const breakdownEl = document.getElementById("selectedDayBreakdown");
+
+  if (!dateInput || !label || !questionsEl || !hoursEl || !breakdownEl) return;
+
+  const today = getTodayDateKey();
+  selectedDateKey = selectedDateKey || today;
+  dateInput.value = selectedDateKey;
+
+  const questionLog = appState.db.questionLog[selectedDateKey] || {};
+  const physics = Number(questionLog.physics) || 0;
+  const chemistry = Number(questionLog.chemistry) || 0;
+  const botany = Number(questionLog.botony) || 0;
+  const zoology = Number(questionLog.zoology) || 0;
+
+  questionsEl.innerText = physics + chemistry + botany + zoology;
+  hoursEl.innerText = `${Number(appState.db.dailyLog[selectedDateKey]) || 0}h`;
+  label.innerText = selectedDateKey === today
+    ? `Today · ${formatSelectedDate(selectedDateKey)}`
+    : formatSelectedDate(selectedDateKey);
+  breakdownEl.innerHTML = `
+    <span>⚡ Physics: ${physics}</span>
+    <span>🧪 Chemistry: ${chemistry}</span>
+    <span>🌿 Botany: ${botany}</span>
+    <span>🐾 Zoology: ${zoology}</span>
+  `;
+}
+
+function bindSelectedDaySummary() {
+  const dateInput = document.getElementById("selectedDate");
+  if (!dateInput) return;
+
+  selectedDateKey = getTodayDateKey();
+  dateInput.value = selectedDateKey;
+  dateInput.addEventListener("change", () => {
+    selectedDateKey = dateInput.value || getTodayDateKey();
+    renderSelectedDaySummary();
+  });
 }
 
 // Returns a date key for N days before/after today.
@@ -477,6 +535,7 @@ function bindQuestionDirectInputs() {
 
         saveStateBackend();
         renderDashboardQuestions();
+        renderSelectedDaySummary();
         updateStreak();
       });
     }
@@ -498,6 +557,7 @@ function bindQuestionDirectInputs() {
 
       saveStateBackend();
       renderDashboardQuestions();
+      renderSelectedDaySummary();
       updateStreak();
     });
   }
@@ -1106,6 +1166,7 @@ function toggleTask(id) {
 
     saveStateBackend();
     renderTasksAndHours();
+    renderSelectedDaySummary();
     updateStreak();
   }
 }
@@ -1122,6 +1183,7 @@ function deleteTask(id) {
     appState.db.tasks = appState.db.tasks.filter((t) => t.id !== id);
     saveStateBackend();
     renderTasksAndHours();
+    renderSelectedDaySummary();
     updateStreak();
   }
 }
@@ -1358,6 +1420,7 @@ function renderAll() {
 
   renderStreakUI();
   renderDashboardQuestions();
+  renderSelectedDaySummary();
   renderSyllabus();
   renderMockTests();
   renderTasksAndHours();
@@ -1383,6 +1446,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initTabs();
   initClassToggle();
   bindQuestionDirectInputs();
+  bindSelectedDaySummary();
   bindMockTestForm();
   bindTasksLogic();
   bindBackupActions();
