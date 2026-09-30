@@ -142,8 +142,26 @@ function App() {
     ));
     const nextDailyLog = { ...db.dailyLog };
     const amount = Number(task.hrs) || 0;
-    nextDailyLog[today] = Math.max(0, (Number(nextDailyLog[today]) || 0) + (task.completed ? -amount : amount));
+    const logDate = task.completed && task.completedOn ? task.completedOn : today;
+    nextDailyLog[logDate] = Math.max(0, (Number(nextDailyLog[logDate]) || 0) + (task.completed ? -amount : amount));
     updateDb({ ...db, tasks: nextTasks, dailyLog: nextDailyLog });
+  };
+
+  const deleteTask = (taskId) => {
+    const task = db.tasks.find((item) => item.id === taskId);
+    if (!task) return;
+
+    const nextDailyLog = { ...db.dailyLog };
+    if (task.completed) {
+      const logDate = task.completedOn || today;
+      nextDailyLog[logDate] = Math.max(0, (Number(nextDailyLog[logDate]) || 0) - (Number(task.hrs) || 0));
+    }
+
+    updateDb({
+      ...db,
+      tasks: db.tasks.filter((item) => item.id !== taskId),
+      dailyLog: nextDailyLog,
+    });
   };
 
   const updateProgress = async (chapterId, field, value) => {
@@ -231,7 +249,7 @@ function App() {
       )}
       {activeView === "syllabus" && <SyllabusView chapters={state.syllabusList} progress={db.syllabusProgress || {}} onUpdate={updateProgress} onAddCustom={addCustomChapter} />}
       {activeView === "tests" && <TestsView tests={db.mockTests || []} onAdd={addMockTest} onDelete={deleteMockTest} />}
-      {activeView === "goals" && <GoalsView db={db} today={today} onToggleTask={toggleTask} onUpdate={updateDb} />}
+      {activeView === "goals" && <GoalsView db={db} today={today} onToggleTask={toggleTask} onDeleteTask={deleteTask} onUpdate={updateDb} />}
       {activeView === "backup" && <BackupView db={db} onReset={resetWeek} onImport={(imported) => updateDb(imported)} />}
     </div>
   );
@@ -330,13 +348,36 @@ function TestsView({ tests, onAdd, onDelete }) {
   const [form, setForm] = useState({ testName: "", testType: "AIATS", testClass: "11", testDate: dateKey(), physics: 0, chemistry: 0, biology: 0, remarks: "" });
   const average = tests.length ? (tests.reduce((sum, test) => sum + Number(test.percentage || 0), 0) / tests.length).toFixed(1) : "0.0";
   const submit = async (event) => { event.preventDefault(); await onAdd(form); setForm({ ...form, testName: "", physics: 0, chemistry: 0, biology: 0, remarks: "" }); };
-  return <main className="feature-page"><div className="feature-heading"><div><p className="eyebrow">Performance lab</p><h2>Mock tests</h2><p>Keep the score history honest and useful.</p></div><div className="progress-stamp"><strong>{average}%</strong><span>average score</span></div></div><form className="test-form" onSubmit={submit}><input required placeholder="Test name" value={form.testName} onChange={(event) => setForm({ ...form, testName: event.target.value })} /><select value={form.testType} onChange={(event) => setForm({ ...form, testType: event.target.value })}><option>AIATS</option><option>Fortnightly</option><option>NRT</option><option>Other</option></select><select value={form.testClass} onChange={(event) => setForm({ ...form, testClass: event.target.value })}><option value="11">Class 11</option><option value="12">Class 12</option><option value="combined">Combined</option></select><input type="date" value={form.testDate} onChange={(event) => setForm({ ...form, testDate: event.target.value })} /><div className="score-inputs"><input type="number" min="0" max="180" placeholder="Physics /180" value={form.physics} onChange={(event) => setForm({ ...form, physics: event.target.value })} /><input type="number" min="0" max="180" placeholder="Chemistry /180" value={form.chemistry} onChange={(event) => setForm({ ...form, chemistry: event.target.value })} /><input type="number" min="0" max="360" placeholder="Biology /360" value={form.biology} onChange={(event) => setForm({ ...form, biology: event.target.value })} /></div><textarea placeholder="One observation for next time" value={form.remarks} onChange={(event) => setForm({ ...form, remarks: event.target.value })} /><button className="primary-button" type="submit">Save score</button></form><div className="test-list">{tests.map((test) => <article className="test-row" key={test.id}><div><span className="chapter-subject">{test.testType} · Class {test.testClass} · {test.testDate}</span><h3>{test.testName}</h3><p>{test.remarks || "No note added."}</p></div><div className="test-score"><strong>{test.total}</strong><span>{test.percentage}%</span><button onClick={() => onDelete(test.id)} aria-label={`Delete ${test.testName}`}>Delete</button></div></article>)}</div></main>;
+  return <main className="feature-page"><div className="feature-heading"><div><p className="eyebrow">Performance lab</p><h2>Mock tests</h2><p>Keep the score history honest and useful.</p></div><div className="progress-stamp"><strong>{average}%</strong><span>average score</span></div></div><form className="test-form" onSubmit={submit}><label><span>Test name</span><input required placeholder="e.g. AIATS 04" value={form.testName} onChange={(event) => setForm({ ...form, testName: event.target.value })} /></label><label><span>Test type</span><select value={form.testType} onChange={(event) => setForm({ ...form, testType: event.target.value })}><option>AIATS</option><option>Fortnightly</option><option>NRT</option><option>Other</option></select></label><label><span>Class</span><select value={form.testClass} onChange={(event) => setForm({ ...form, testClass: event.target.value })}><option value="11">Class 11</option><option value="12">Class 12</option><option value="combined">Combined</option></select></label><label><span>Date</span><input type="date" value={form.testDate} onChange={(event) => setForm({ ...form, testDate: event.target.value })} /></label><div className="score-inputs"><label className="score-field"><span>Physics / 180</span><input type="number" min="0" max="180" value={form.physics} onChange={(event) => setForm({ ...form, physics: event.target.value })} /></label><label className="score-field"><span>Chemistry / 180</span><input type="number" min="0" max="180" value={form.chemistry} onChange={(event) => setForm({ ...form, chemistry: event.target.value })} /></label><label className="score-field"><span>Biology / 360</span><input type="number" min="0" max="360" value={form.biology} onChange={(event) => setForm({ ...form, biology: event.target.value })} /></label></div><label className="remarks-field"><span>Notes</span><textarea placeholder="One observation for next time" value={form.remarks} onChange={(event) => setForm({ ...form, remarks: event.target.value })} /></label><button className="primary-button" type="submit">Save score</button></form><div className="test-list">{tests.map((test) => <article className="test-row" key={test.id}><div><span className="chapter-subject">{test.testType} · Class {test.testClass} · {test.testDate}</span><h3>{test.testName}</h3><p>{test.remarks || "No note added."}</p></div><div className="test-score"><strong>{test.total}</strong><span>{test.percentage}%</span><button onClick={() => onDelete(test.id)} aria-label={`Delete ${test.testName}`}>Delete</button></div></article>)}</div></main>;
 }
 
-function GoalsView({ db, today, onToggleTask, onUpdate }) {
+function GoalsView({ db, today, onToggleTask, onDeleteTask, onUpdate }) {
   const [form, setForm] = useState({ desc: "", subject: "Physics", hrs: 1, cls: "11" });
-  const addTask = (event) => { event.preventDefault(); if (!form.desc.trim()) return; onUpdate({ ...db, tasks: [...db.tasks, { ...form, id: Date.now(), hrs: Number(form.hrs), completed: false, completedOn: null }] }); setForm({ ...form, desc: "" }); };
-  return <main className="feature-page"><div className="feature-heading"><div><p className="eyebrow">Weekly rhythm</p><h2>Study plan</h2><p>Put the next few useful hours somewhere visible.</p></div><div className="progress-stamp"><strong>{Number(db.dailyLog[today]) || 0}h</strong><span>today logged</span></div></div><form className="add-row" onSubmit={addTask}><input required placeholder="What will you study?" value={form.desc} onChange={(event) => setForm({ ...form, desc: event.target.value })} /><select value={form.subject} onChange={(event) => setForm({ ...form, subject: event.target.value })}>{["Physics", "Chemistry", "Botany", "Zoology"].map((item) => <option key={item}>{item}</option>)}</select><input type="number" min="0.5" step="0.5" value={form.hrs} onChange={(event) => setForm({ ...form, hrs: event.target.value })} /><button className="primary-button">Add goal</button></form><div className="full-task-list">{db.tasks.map((task) => <label className="task-row" key={task.id}><input type="checkbox" checked={Boolean(task.completed)} onChange={() => onToggleTask(task.id)} /><span><strong>{task.desc}</strong><small>{task.subject} · Class {task.cls} · {task.hrs}h {task.completed ? `· completed ${task.completedOn}` : ""}</small></span></label>)}</div></main>;
+  const addTask = (event) => {
+    event.preventDefault();
+    if (!form.desc.trim()) return;
+    onUpdate({
+      ...db,
+      tasks: [...db.tasks, { ...form, id: Date.now(), hrs: Number(form.hrs), completed: false, completedOn: null }],
+    });
+    setForm({ ...form, desc: "" });
+  };
+
+  return <main className="feature-page">
+    <div className="feature-heading"><div><p className="eyebrow">Weekly rhythm</p><h2>Study plan</h2><p>Put the next few useful hours somewhere visible.</p></div><div className="progress-stamp"><strong>{Number(db.dailyLog[today]) || 0}h</strong><span>today logged</span></div></div>
+    <form className="add-row" onSubmit={addTask}>
+      <input required placeholder="What will you study?" value={form.desc} onChange={(event) => setForm({ ...form, desc: event.target.value })} />
+      <select value={form.subject} onChange={(event) => setForm({ ...form, subject: event.target.value })}>{["Physics", "Chemistry", "Botany", "Zoology"].map((item) => <option key={item}>{item}</option>)}</select>
+      <select aria-label="Class" value={form.cls} onChange={(event) => setForm({ ...form, cls: event.target.value })}><option value="11">Class 11</option><option value="12">Class 12</option></select>
+      <input aria-label="Study hours" type="number" min="0.5" step="0.5" value={form.hrs} onChange={(event) => setForm({ ...form, hrs: event.target.value })} />
+      <button className="primary-button">Add goal</button>
+    </form>
+    <div className="full-task-list">{db.tasks.map((task) => <div className="task-row" key={task.id}>
+      <input type="checkbox" checked={Boolean(task.completed)} onChange={() => onToggleTask(task.id)} aria-label={`Mark ${task.desc} complete`} />
+      <span><strong>{task.desc}</strong><small>{task.subject} · Class {task.cls} · {task.hrs}h {task.completed ? `· completed ${task.completedOn}` : ""}</small></span>
+      <button className="task-delete" type="button" onClick={() => onDeleteTask(task.id)} aria-label={`Delete ${task.desc}`}>Delete</button>
+    </div>)}</div>
+  </main>;
 }
 
 function BackupView({ db, onReset, onImport }) {

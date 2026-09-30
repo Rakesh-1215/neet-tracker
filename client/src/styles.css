@@ -91,6 +91,7 @@ h1 { font-size: clamp(28px, 4vw, 48px); line-height: 1; }
 .task-row span { display: grid; gap: 4px; }
 .task-row strong { color: var(--ink); font-size: 12px; }
 .task-row small { color: var(--muted); font-size: 10px; }
+.task-delete { margin-left: auto; border: 1px solid #fecaca; background: #fff1f2; color: #b91c1c; padding: 6px 9px; font-size: 10px; }
 .empty-state, .migration-placeholder, .status-screen { color: var(--muted); font-size: 14px; line-height: 1.6; }
 .empty-state { padding-top: 24px; }
 .migration-placeholder, .status-screen { min-height: 55vh; display: grid; place-content: center; justify-items: center; text-align: center; }
@@ -120,7 +121,12 @@ h1 { font-size: clamp(28px, 4vw, 48px); line-height: 1; }
 .revision-count { color: var(--orange); font-weight: 700; }
 .test-form { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; }
 .test-form .score-inputs { display: contents; }
+.test-form > label, .score-field, .remarks-field { display: grid; gap: 5px; color: var(--muted); font-size: 10px; font-weight: 700; }
+.test-form > label input, .test-form > label select, .score-field input { width: 100%; }
+.score-inputs { grid-column: 1 / -1; display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .test-form textarea { grid-column: 1 / -1; min-height: 70px; resize: vertical; }
+.remarks-field { grid-column: 1 / -1; }
+.remarks-field textarea { width: 100%; }
 .test-form .primary-button { width: max-content; }
 .test-row p, .backup-grid p { color: var(--muted); font-size: 12px; margin-top: 7px; }
 .test-score { display: grid; justify-items: end; gap: 4px; min-width: 70px; }
