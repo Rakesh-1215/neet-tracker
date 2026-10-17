@@ -308,9 +308,6 @@ function updateStreak() {
     streak.bestStreak = Number(streak.bestStreak) || 0;
   }
 
-  const savedCurrentStreak = streak.currentStreak;
-  const savedLastActiveDate = streak.lastActiveDate;
-
   // Mark older streak data as migrated without discarding the saved streak.
   if (streak.criteriaVersion !== STREAK_CRITERIA_VERSION) {
     streak.criteriaVersion = STREAK_CRITERIA_VERSION;
@@ -414,31 +411,6 @@ function updateStreak() {
   // ---------------------------------------------------------
   // UPDATE STREAK DATA
   // ---------------------------------------------------------
-
-  if (savedLastActiveDate) {
-    const parsedSavedDate = new Date(savedLastActiveDate);
-
-    if (!Number.isNaN(parsedSavedDate.getTime())) {
-      const year = parsedSavedDate.getFullYear();
-      const month = String(parsedSavedDate.getMonth() + 1).padStart(2, "0");
-      const day = String(parsedSavedDate.getDate()).padStart(2, "0");
-      const normalizedSavedDate = `${year}-${month}-${day}`;
-      const daysSinceActive = Math.round(
-        (new Date(today + "T00:00:00") -
-          new Date(normalizedSavedDate + "T00:00:00")) /
-          (1000 * 60 * 60 * 24),
-      );
-
-      if (savedCurrentStreak > 0 && daysSinceActive >= 0 && daysSinceActive <= 1) {
-        const persistedStreak =
-          daysSinceActive === 1 && qualifiedDates[today]
-            ? savedCurrentStreak + 1
-            : savedCurrentStreak;
-
-        currentStreak = Math.max(currentStreak, persistedStreak);
-      }
-    }
-  }
 
   streak.currentStreak = currentStreak;
 
