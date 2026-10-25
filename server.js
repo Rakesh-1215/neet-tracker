@@ -731,7 +731,8 @@ function calculateLastWeekQuestions(db) {
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
-    service: 'NEET Master Pro'
+    service: 'NEET Master Pro',
+    storage: useMongoDB ? 'mongodb' : 'local'
   });
 });
 

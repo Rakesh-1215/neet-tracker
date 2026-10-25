@@ -232,14 +232,17 @@ async function loadState() {
 
 async function saveStateBackend() {
   try {
-    await fetch("/api/state", {
+    const response = await fetchWithTimeout("/api/state", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(appState.db),
     });
+    if (!response.ok) throw new Error(`Server save failed (${response.status})`);
+    return true;
   } catch (e) {
     console.warn("Failed to save to backend, saving offline:", e);
     saveOfflineState();
+    return false;
   }
 }
 
@@ -1547,14 +1550,15 @@ function importFromJSON(e) {
         appState.db = parsed.db;
         ensureStateShape();
         if (parsed.syllabusList) appState.syllabusList = parsed.syllabusList;
-        await saveStateBackend();
+        const saved = await saveStateBackend();
+        if (!saved) throw new Error("The backup could not be saved to the live server. Check your login and MongoDB connection.");
         renderAll();
         alert("✅ Backup restored successfully!");
       } else {
         alert("Invalid backup file format");
       }
     } catch (err) {
-      alert("Error parsing backup JSON file");
+      alert(err.message || "Error restoring backup JSON file");
     }
   };
   reader.readAsText(file);
