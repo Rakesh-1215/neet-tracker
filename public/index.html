@@ -12,8 +12,8 @@
   <section id="auth-screen" class="auth-screen" aria-label="Account access">
     <div class="auth-card">
       <div class="auth-brand">🩺</div>
-      <h1>NEET Master Pro</h1>
-      <p class="auth-subtitle">Your personal preparation command center</p>
+      <h1 id="auth-title">NEET Master Pro</h1>
+      <p id="auth-subtitle" class="auth-subtitle">Your personal preparation command center</p>
       <div id="auth-error" class="auth-error" role="alert"></div>
 
       <form id="login-form" class="auth-form">
@@ -46,14 +46,14 @@
 
     <header class="app-header">
       <div class="logo-area">
-        <h1>🩺 NEET Master Pro</h1>
+        <h1 id="app-title">🩺 NEET Master Pro</h1>
         <p class="quote-box" id="quote">"Earn the stethoscope."</p>
       </div>
       <!-- Tab Navigation Navigation -->
       <nav class="nav-tabs">
         <button class="nav-btn active" data-tab="dashboard">📊 Dashboard</button>
-        <button class="nav-btn" data-tab="syllabus">📚 NCERT Syllabus</button>
-        <button class="nav-btn" data-tab="mocktests">📝 Coaching Tests</button>
+        <button id="syllabus-tab-label" class="nav-btn" data-tab="syllabus">📚 NCERT Syllabus</button>
+        <button id="tests-tab-label" class="nav-btn" data-tab="mocktests">📝 Coaching Tests</button>
         <button class="nav-btn" data-tab="goals">🎯 Study Plan</button>
         <button class="nav-btn" data-tab="backup">⚙️ Backup</button>
       </nav>
@@ -355,7 +355,7 @@
             <button type="button" id="class12Btn" class="class-btn" data-class="12">📗 Class 12</button>
           </div>
           <div class="row-flex">
-            <input type="number" id="hrs" placeholder="Hours (e.g. 2.5)" style="flex:1">
+            <input type="number" id="hrs" placeholder="Hours (e.g. 2.50)" min="0.01" max="24" step="0.01" inputmode="decimal" style="flex:1">
             <div class="selected-class-hint" id="selectedClassHint">Selected: Class 11</div>
           </div>
           <button class="btn-add" id="addTaskBtn">+ Add Goal Task</button>

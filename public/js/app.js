@@ -39,6 +39,32 @@ const quotes = [
 
 let currentSelectedClass = "11";
 let selectedDateKey = null;
+let currentUser = null;
+
+function roundHours(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.round((number + Number.EPSILON) * 100) / 100;
+}
+
+function formatHours(value) {
+  return roundHours(value).toFixed(2).replace(/\.?0+$/, "");
+}
+
+function applyTrackerBranding() {
+  const isCA = currentUser?.trackerType === "ca";
+  const title = isCA ? "📘 CA Prep Tracker" : "🩺 NEET Master Pro";
+  const subtitle = isCA
+    ? "Your Chartered Accountancy preparation command center"
+    : "Your NEET preparation command center";
+
+  document.title = isCA ? "CA Prep Tracker" : "NEET 2027: Master Study Tracker Pro 🩺🔥";
+  document.getElementById("app-title")?.replaceChildren(document.createTextNode(title));
+  document.getElementById("auth-title")?.replaceChildren(document.createTextNode(isCA ? "CA Prep Tracker" : "NEET Master Pro"));
+  document.getElementById("auth-subtitle")?.replaceChildren(document.createTextNode(subtitle));
+  document.getElementById("syllabus-tab-label")?.replaceChildren(document.createTextNode(isCA ? "📚 CA Syllabus" : "📚 NCERT Syllabus"));
+  document.getElementById("tests-tab-label")?.replaceChildren(document.createTextNode(isCA ? "📝 Mock Tests" : "📝 Coaching Tests"));
+}
 
 function showAuthError(message = "") {
   const error = document.getElementById("auth-error");
@@ -121,6 +147,9 @@ async function loadState() {
     return false;
   }
 
+  const authData = await authResponse.json();
+  currentUser = authData.user;
+  applyTrackerBranding();
   hideAuthScreen();
   try {
     const res = await fetch("/api/state");
@@ -272,7 +301,7 @@ function renderSelectedDaySummary() {
   const zoology = Number(questionLog.zoology) || 0;
 
   questionsEl.innerText = physics + chemistry + botany + zoology;
-  hoursEl.innerText = `${Number(appState.db.dailyLog[selectedDateKey]) || 0}h`;
+  hoursEl.innerText = `${formatHours(appState.db.dailyLog[selectedDateKey])}h`;
   label.innerText = selectedDateKey === today
     ? `Today · ${formatSelectedDate(selectedDateKey)}`
     : formatSelectedDate(selectedDateKey);
@@ -1167,9 +1196,9 @@ function bindTasksLogic() {
     addBtn.onclick = () => {
       const desc = document.getElementById("desc").value.trim();
       const subject = document.getElementById("subjectSelect").value;
-      const hrs = parseFloat(document.getElementById("hrs").value);
-      if (!desc || isNaN(hrs) || hrs <= 0) {
-        return alert("Please enter topic and valid hours");
+      const hrs = roundHours(document.getElementById("hrs").value);
+      if (!desc || !Number.isFinite(hrs) || hrs <= 0 || hrs > 24) {
+        return alert("Please enter valid hours between 0.01 and 24.00");
       }
 
       appState.db.tasks.push({
@@ -1201,16 +1230,17 @@ function toggleTask(id) {
       task.completed = true;
       task.completedOn = day;
 
-      appState.db.dailyLog[day] =
-        (Number(appState.db.dailyLog[day]) || 0) + (Number(task.hrs) || 0);
+      appState.db.dailyLog[day] = roundHours(
+        (Number(appState.db.dailyLog[day]) || 0) + (Number(task.hrs) || 0),
+      );
     } else {
       // Uncomplete task
       if (task.completedOn !== null) {
-        appState.db.dailyLog[task.completedOn] = Math.max(
+        appState.db.dailyLog[task.completedOn] = roundHours(Math.max(
           0,
           (Number(appState.db.dailyLog[task.completedOn]) || 0) -
             (Number(task.hrs) || 0),
-        );
+        ));
       }
 
       task.completed = false;
@@ -1228,10 +1258,10 @@ function deleteTask(id) {
   const task = appState.db.tasks.find((t) => t.id === id);
   if (task) {
     if (task.completed && task.completedOn !== null) {
-      appState.db.dailyLog[task.completedOn] = Math.max(
+      appState.db.dailyLog[task.completedOn] = roundHours(Math.max(
         0,
         (appState.db.dailyLog[task.completedOn] || 0) - task.hrs,
-      );
+      ));
     }
     appState.db.tasks = appState.db.tasks.filter((t) => t.id !== id);
     saveStateBackend();
@@ -1283,7 +1313,7 @@ function renderTasksAndHours() {
           <div style="font-size:11px; color:#64748b; margin-top:2px;">
             <span>${task.subject}</span> |
             <span>Class ${task.cls}</span> |
-            <span>⏱ ${task.hrs}h</span>
+            <span>⏱ ${formatHours(task.hrs)}h</span>
           </div>
         </div>
 
@@ -1339,7 +1369,7 @@ function renderTasksAndHours() {
             ></div>
           </div>
 
-          <div class="daily-hours">${hours}h</div>
+          <div class="daily-hours">${formatHours(hours)}h</div>
           <div class="daily-date">${dateLabel}</div>
         </div>
       `;
