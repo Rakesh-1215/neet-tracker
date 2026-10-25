@@ -40,8 +40,88 @@ const quotes = [
 let currentSelectedClass = "11";
 let selectedDateKey = null;
 
+function showAuthError(message = "") {
+  const error = document.getElementById("auth-error");
+  if (!error) return;
+  error.textContent = message;
+  error.style.display = message ? "block" : "none";
+}
+
+function showAuthScreen() {
+  document.body.classList.add("auth-required");
+}
+
+function hideAuthScreen() {
+  document.body.classList.remove("auth-required");
+}
+
+async function submitAuth(url, payload) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "Unable to complete authentication.");
+  return data;
+}
+
+function initAuth() {
+  document.body.classList.add("auth-required");
+
+  document.getElementById("show-register")?.addEventListener("click", () => {
+    document.getElementById("login-form").hidden = true;
+    document.getElementById("register-form").hidden = false;
+    showAuthError();
+  });
+
+  document.getElementById("show-login")?.addEventListener("click", () => {
+    document.getElementById("register-form").hidden = true;
+    document.getElementById("login-form").hidden = false;
+    showAuthError();
+  });
+
+  document.getElementById("login-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showAuthError();
+    try {
+      await submitAuth("/api/auth/login", {
+        email: document.getElementById("login-email").value,
+        password: document.getElementById("login-password").value,
+      });
+      await loadState();
+    } catch (error) {
+      showAuthError(error.message);
+    }
+  });
+
+  document.getElementById("register-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showAuthError();
+    try {
+      await submitAuth("/api/auth/register", {
+        name: document.getElementById("register-name").value,
+        email: document.getElementById("register-email").value,
+        password: document.getElementById("register-password").value,
+        trackerType: document.getElementById("register-tracker-type").value,
+      });
+      await loadState();
+    } catch (error) {
+      showAuthError(error.message);
+    }
+  });
+}
+
 // API Helpers
 async function loadState() {
+  const authResponse = await fetch("/api/auth/me");
+  if (!authResponse.ok) {
+    showAuthScreen();
+    return false;
+  }
+
+  hideAuthScreen();
   try {
     const res = await fetch("/api/state");
     if (res.ok) {
@@ -59,6 +139,7 @@ async function loadState() {
   }
   updateStreak();
   renderAll();
+  return true;
 }
 
 async function saveStateBackend() {
@@ -1415,6 +1496,7 @@ window.deleteTask = deleteTask;
 
 // Init Application
 window.addEventListener("DOMContentLoaded", () => {
+  initAuth();
   initTabs();
   initClassToggle();
   bindQuestionDirectInputs();

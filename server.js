@@ -3,10 +3,14 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI;
+const AUTH_SECRET = process.env.AUTH_SECRET || 'local-development-auth-secret';
+const LEGACY_OWNER_EMAIL = (process.env.LEGACY_OWNER_EMAIL || '').trim().toLowerCase();
+const AUTH_COOKIE = 'neet_tracker_session';
 
 app.use(cors());
 app.use(express.json());
@@ -21,6 +25,7 @@ let useMongoDB = false;
 
 const stateSchema = new mongoose.Schema({
   key: { type: String, default: 'main_db', unique: true },
+  ownerId: { type: String, default: null, index: true },
   weekId: Number,
   tasks: Array,
   dailyLog: Object,
@@ -33,6 +38,16 @@ const stateSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const StateModel = mongoose.model('AppState', stateSchema);
+
+const userSchema = new mongoose.Schema({
+  name: { type: String, trim: true, maxlength: 80 },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  passwordHash: { type: String, required: true },
+  passwordSalt: { type: String, required: true },
+  trackerType: { type: String, enum: ['neet', 'ca'], default: 'neet' }
+}, { timestamps: true });
+
+const UserModel = mongoose.model('TrackerUser', userSchema);
 
 
 if (MONGODB_URI) {
@@ -61,11 +76,140 @@ if (MONGODB_URI) {
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const SYLLABUS_FILE = path.join(DATA_DIR, 'syllabus.json');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const USER_DATA_DIR = path.join(DATA_DIR, 'users');
 
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+if (!fs.existsSync(USER_DATA_DIR)) {
+  fs.mkdirSync(USER_DATA_DIR, { recursive: true });
+}
+
+function normalizeEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
+  const passwordHash = crypto.scryptSync(String(password), salt, 64).toString('hex');
+  return { passwordHash, passwordSalt: salt };
+}
+
+function passwordsMatch(password, user) {
+  const candidate = hashPassword(password, user.passwordSalt).passwordHash;
+  return crypto.timingSafeEqual(
+    Buffer.from(candidate, 'hex'),
+    Buffer.from(user.passwordHash, 'hex')
+  );
+}
+
+function createSessionToken(user) {
+  const payload = Buffer.from(JSON.stringify({
+    id: String(user._id || user.id),
+    email: user.email,
+    exp: Date.now() + 30 * 24 * 60 * 60 * 1000
+  })).toString('base64url');
+  const signature = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
+  return `${payload}.${signature}`;
+}
+
+function readSessionToken(token) {
+  if (!token || !token.includes('.')) return null;
+  const [payload, signature] = token.split('.');
+  const expected = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
+  if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+    return null;
+  }
+  try {
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return data.exp > Date.now() ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function setSessionCookie(res, token) {
+  res.setHeader('Set-Cookie', `${AUTH_COOKIE}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=2592000${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+}
+
+function clearSessionCookie(res) {
+  res.setHeader('Set-Cookie', `${AUTH_COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+}
+
+function getCookies(req) {
+  return Object.fromEntries((req.headers.cookie || '').split(';').filter(Boolean).map(part => {
+    const index = part.indexOf('=');
+    return [part.slice(0, index).trim(), decodeURIComponent(part.slice(index + 1).trim())];
+  }));
+}
+
+function serializeUser(user) {
+  return {
+    id: String(user._id || user.id),
+    name: user.name || '',
+    email: user.email,
+    trackerType: user.trackerType || 'neet'
+  };
+}
+
+function localUsers() {
+  if (!fs.existsSync(USERS_FILE)) return [];
+  try { return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8')); } catch { return []; }
+}
+
+function saveLocalUsers(users) {
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
+}
+
+async function findUserByEmail(email) {
+  const normalized = normalizeEmail(email);
+  if (useMongoDB) return UserModel.findOne({ email: normalized });
+  return localUsers().find(user => user.email === normalized) || null;
+}
+
+async function createUser(input) {
+  const normalized = normalizeEmail(input.email);
+  const password = hashPassword(input.password);
+  if (useMongoDB) {
+    return UserModel.create({
+      name: input.name || '',
+      email: normalized,
+      ...password,
+      trackerType: input.trackerType === 'ca' ? 'ca' : 'neet'
+    });
+  }
+  const user = {
+    id: crypto.randomUUID(),
+    name: input.name || '',
+    email: normalized,
+    ...password,
+    trackerType: input.trackerType === 'ca' ? 'ca' : 'neet'
+  };
+  const users = localUsers();
+  users.push(user);
+  saveLocalUsers(users);
+  return user;
+}
+
+async function findUserById(id) {
+  if (useMongoDB) return UserModel.findById(id);
+  return localUsers().find(user => user.id === id) || null;
+}
+
+async function authenticateRequest(req) {
+  const session = readSessionToken(getCookies(req)[AUTH_COOKIE]);
+  if (!session) return null;
+  return findUserById(session.id);
+}
+
+async function requireAuth(req, res, next) {
+  const user = await authenticateRequest(req);
+  if (!user) return res.status(401).json({ error: 'Authentication required' });
+  req.user = serializeUser(user);
+  next();
 }
 
 
@@ -258,21 +402,47 @@ function createInitialDB() {
 // Database Read
 // ============================================================
 
-async function readDB() {
+function stateKeyFor(ownerId) {
+  return ownerId ? `user:${ownerId}` : 'main_db';
+}
+
+function localStateFile(ownerId) {
+  return ownerId ? path.join(USER_DATA_DIR, `${String(ownerId).replace(/[^a-zA-Z0-9_-]/g, '_')}.json`) : DB_FILE;
+}
+
+async function readDB(ownerId = null) {
+
+  const stateKey = stateKeyFor(ownerId);
+  const stateFile = localStateFile(ownerId);
 
   if (useMongoDB) {
     try {
 
       let doc = await StateModel.findOne({
-        key: 'main_db'
+        key: stateKey
       });
 
       if (!doc) {
-        const initial = createInitialDB();
+        let initial = createInitialDB();
+
+        // The first configured legacy owner receives a copy of the existing
+        // NEET tracker without deleting or mutating the legacy record.
+        if (ownerId && LEGACY_OWNER_EMAIL) {
+          const owner = await UserModel.findById(ownerId);
+          if (owner && owner.email === LEGACY_OWNER_EMAIL) {
+            const legacy = await StateModel.findOne({ key: 'main_db' });
+            if (legacy) {
+              initial = legacy.toObject();
+              delete initial._id;
+              delete initial.__v;
+            }
+          }
+        }
 
         doc = await StateModel.create({
-          key: 'main_db',
-          ...initial
+          ...initial,
+          key: stateKey,
+          ownerId
         });
       }
 
@@ -293,11 +463,18 @@ async function readDB() {
   }
 
 
-  if (!fs.existsSync(DB_FILE)) {
+  if (!fs.existsSync(stateFile)) {
 
-    const initial = createInitialDB();
+    let initial = createInitialDB();
 
-    writeDBLocal(initial);
+    if (ownerId && LEGACY_OWNER_EMAIL) {
+      const owner = localUsers().find(user => user.id === ownerId);
+      if (owner && owner.email === LEGACY_OWNER_EMAIL && fs.existsSync(DB_FILE)) {
+        initial = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+      }
+    }
+
+    writeDBLocal(initial, ownerId);
 
     return initial;
   }
@@ -306,7 +483,7 @@ async function readDB() {
   try {
 
     const data = JSON.parse(
-      fs.readFileSync(DB_FILE, 'utf8')
+      fs.readFileSync(stateFile, 'utf8')
     );
 
 
@@ -362,7 +539,7 @@ async function readDB() {
 
     const initial = createInitialDB();
 
-    writeDBLocal(initial);
+    writeDBLocal(initial, ownerId);
 
     return initial;
   }
@@ -373,11 +550,11 @@ async function readDB() {
 // Database Write
 // ============================================================
 
-function writeDBLocal(data) {
+function writeDBLocal(data, ownerId = null) {
   try {
 
     fs.writeFileSync(
-      DB_FILE,
+      localStateFile(ownerId),
       JSON.stringify(data, null, 2),
       'utf8'
     );
@@ -392,16 +569,16 @@ function writeDBLocal(data) {
 }
 
 
-async function writeDB(data) {
+async function writeDB(data, ownerId = null) {
 
-  writeDBLocal(data);
+  writeDBLocal(data, ownerId);
 
   if (useMongoDB) {
     try {
 
       await StateModel.findOneAndUpdate(
-        { key: 'main_db' },
-        { $set: data },
+        { key: stateKeyFor(ownerId) },
+        { $set: { ...data, ownerId } },
         {
           upsert: true,
           new: true
@@ -505,6 +682,58 @@ app.get('/api/health', (req, res) => {
 });
 
 // ============================================================
+// Authentication
+// ============================================================
+
+app.post('/api/auth/register', async (req, res) => {
+  const { name, email, password, trackerType } = req.body || {};
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!normalizedEmail || !normalizedEmail.includes('@') || String(password || '').length < 8) {
+    return res.status(400).json({ error: 'Use a valid email and a password of at least 8 characters.' });
+  }
+
+  if (await findUserByEmail(normalizedEmail)) {
+    return res.status(409).json({ error: 'An account with this email already exists.' });
+  }
+
+  try {
+    const user = await createUser({ name, email: normalizedEmail, password, trackerType });
+    setSessionCookie(res, createSessionToken(user));
+    res.status(201).json({ user: serializeUser(user) });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Unable to create the account.' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const user = await findUserByEmail(req.body?.email);
+  if (!user || !passwordsMatch(req.body?.password || '', user)) {
+    return res.status(401).json({ error: 'Incorrect email or password.' });
+  }
+
+  setSessionCookie(res, createSessionToken(user));
+  res.json({ user: serializeUser(user) });
+});
+
+app.get('/api/auth/me', async (req, res) => {
+  const user = await authenticateRequest(req);
+  if (!user) return res.status(401).json({ error: 'Not signed in' });
+  res.json({ user: serializeUser(user) });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  clearSessionCookie(res);
+  res.json({ success: true });
+});
+
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health' || req.path.startsWith('/auth/')) return next();
+  return requireAuth(req, res, next);
+});
+
+// ============================================================
 // API Routes
 // ============================================================
 
@@ -512,7 +741,7 @@ app.get('/api/health', (req, res) => {
 // Get full app state & default syllabus
 app.get('/api/state', async (req, res) => {
 
-  const db = await readDB();
+  const db = await readDB(req.user.id);
 
   const currentWeek =
     getWeekNumber(new Date());
@@ -532,7 +761,7 @@ app.get('/api/state', async (req, res) => {
 
     db.weekId = currentWeek;
 
-    await writeDB(db);
+    await writeDB(db, req.user.id);
   }
 
 
@@ -552,7 +781,7 @@ app.post('/api/state', async (req, res) => {
 
   const newDB = req.body;
 
-  await writeDB(newDB);
+  await writeDB(newDB, req.user.id);
 
   res.json({
     success: true,
@@ -573,7 +802,7 @@ app.post('/api/syllabus/update', async (req, res) => {
     value
   } = req.body;
 
-  const db = await readDB();
+  const db = await readDB(req.user.id);
 
   if (!db.syllabusProgress[chapterId]) {
 
@@ -588,7 +817,7 @@ app.post('/api/syllabus/update', async (req, res) => {
   db.syllabusProgress[chapterId][field] =
     value;
 
-  await writeDB(db);
+  await writeDB(db, req.user.id);
 
   res.json({
     success: true,
@@ -617,7 +846,7 @@ app.post('/api/syllabus/custom', async (req, res) => {
     });
   }
 
-  const db = await readDB();
+  const db = await readDB(req.user.id);
 
   const id =
     `custom_${Date.now()}`;
@@ -646,7 +875,7 @@ app.post('/api/syllabus/custom', async (req, res) => {
     revisions: 0
   };
 
-  await writeDB(db);
+  await writeDB(db, req.user.id);
 
   res.json({
     success: true,
@@ -707,7 +936,7 @@ app.post('/api/tests', async (req, res) => {
     ((total / 720) * 100).toFixed(1);
 
 
-  const db = await readDB();
+  const db = await readDB(req.user.id);
 
   if (!db.mockTests) {
     db.mockTests = [];
@@ -750,7 +979,7 @@ app.post('/api/tests', async (req, res) => {
     newTest
   );
 
-  await writeDB(db);
+  await writeDB(db, req.user.id);
 
   res.json({
     success: true,
@@ -770,7 +999,7 @@ app.delete('/api/tests/:id', async (req, res) => {
     parseInt(req.params.id, 10);
 
   const db =
-    await readDB();
+    await readDB(req.user.id);
 
   if (db.mockTests) {
 
@@ -779,7 +1008,7 @@ app.delete('/api/tests/:id', async (req, res) => {
         t => t.id !== id
       );
 
-    await writeDB(db);
+    await writeDB(db, req.user.id);
   }
 
   res.json({
@@ -796,7 +1025,7 @@ app.delete('/api/tests/:id', async (req, res) => {
 
 app.post('/api/reset-week', async (req, res) => {
 
-  const db = await readDB();
+  const db = await readDB(req.user.id);
 
 
   // Save the previous calendar week's
@@ -838,7 +1067,7 @@ app.post('/api/reset-week', async (req, res) => {
     getWeekNumber(new Date());
 
 
-  await writeDB(db);
+  await writeDB(db, req.user.id);
 
 
   res.json({
