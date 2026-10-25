@@ -638,7 +638,9 @@ async function writeDB(data, ownerId = null) {
 
       await StateModel.findOneAndUpdate(
         { key: stateKeyFor(ownerId) },
-        { $set: { ...data, ownerId } },
+        // Backups can contain the legacy `main_db` key. Always bind saved
+        // state to the currently authenticated user's key instead.
+        { $set: { ...data, key: stateKeyFor(ownerId), ownerId } },
         {
           upsert: true,
           new: true
