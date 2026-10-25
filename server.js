@@ -384,7 +384,7 @@ function createInitialDB(trackerType = 'neet') {
 
     customChapters: [],
 
-    mockTests: initialAakashTests,
+    mockTests: trackerType === 'ca' ? [] : initialAakashTests,
 
     streakData: {
       currentStreak: 56,
@@ -501,6 +501,19 @@ async function readDB(ownerId = null, trackerType = 'neet') {
       }
 
       const data = doc.toObject();
+
+      // Older CA accounts were created with the NEET seed mock tests.
+      // Remove only that untouched seed data; never remove user-entered tests.
+      if (
+        trackerType === 'ca' &&
+        JSON.stringify(data.mockTests || []) === JSON.stringify(createInitialDB('neet').mockTests || [])
+      ) {
+        data.mockTests = [];
+        await StateModel.updateOne(
+          { key: stateKey },
+          { $set: { mockTests: [] } }
+        );
+      }
 
       delete data._id;
       delete data.__v;
@@ -973,14 +986,20 @@ app.post('/api/tests', async (req, res) => {
     physics,
     chemistry,
     biology,
+    economics,
     remarks
   } = req.body;
+
+  const isCA = req.user.trackerType === 'ca';
+  const maxPerPaper = isCA ? 100 : 180;
+  const maxBiology = isCA ? 100 : 360;
+  const maxTotal = isCA ? 400 : 720;
 
 
   const p = Math.max(
     0,
     Math.min(
-      180,
+      maxPerPaper,
       parseInt(physics, 10) || 0
     )
   );
@@ -988,7 +1007,7 @@ app.post('/api/tests', async (req, res) => {
   const c = Math.max(
     0,
     Math.min(
-      180,
+      maxPerPaper,
       parseInt(chemistry, 10) || 0
     )
   );
@@ -996,20 +1015,24 @@ app.post('/api/tests', async (req, res) => {
   const b = Math.max(
     0,
     Math.min(
-      360,
+      maxBiology,
       parseInt(biology, 10) || 0
     )
   );
 
+  const e = isCA
+    ? Math.max(0, Math.min(100, parseInt(economics, 10) || 0))
+    : 0;
+
 
   const total =
-    p + c + b;
+    p + c + b + e;
 
   const percentage =
-    ((total / 720) * 100).toFixed(1);
+    ((total / maxTotal) * 100).toFixed(1);
 
 
-  const db = await readDB(req.user.id);
+  const db = await readDB(req.user.id, req.user.trackerType);
 
   if (!db.mockTests) {
     db.mockTests = [];
@@ -1021,7 +1044,7 @@ app.post('/api/tests', async (req, res) => {
     id: Date.now(),
 
     testName:
-      testName || 'AAKASH Test',
+      testName || (isCA ? 'CA Foundation Mock' : 'AAKASH Test'),
 
     testType:
       testType || 'AIATS',
@@ -1038,6 +1061,7 @@ app.post('/api/tests', async (req, res) => {
     physics: p,
     chemistry: c,
     biology: b,
+    economics: e,
 
     total: total,
 

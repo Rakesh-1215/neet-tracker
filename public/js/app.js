@@ -123,6 +123,70 @@ function applyTrackerBranding() {
       taskSubject.innerHTML = subjects
         .map(([, label]) => `<option value="${label.replace(/^\S+\s/, "")}">${label}</option>`)
         .join("");
+
+    const mockTitles = document.querySelectorAll("#tab-mocktests .section-title");
+    if (mockTitles[0]) mockTitles[0].textContent = "📝 CA Foundation Mock Test Score Keeper";
+    if (mockTitles[1]) mockTitles[1].textContent = "📊 CA Foundation Test Performance History";
+    const mockDescription = document.querySelector("#tab-mocktests .section-desc");
+    if (mockDescription) mockDescription.textContent = "Track your Accounting, Business Laws, Quantitative Aptitude, and Business Economics mock test scores.";
+    const nameLabel = document.querySelector("#testName")?.closest(".form-group")?.querySelector("label");
+    if (nameLabel) nameLabel.textContent = "CA Foundation Test Name / Code";
+    const testName = document.getElementById("testName");
+    if (testName) testName.placeholder = "e.g. CA Foundation Full Mock 01";
+    const testType = document.getElementById("testType");
+    if (testType) {
+      testType.innerHTML = `
+        <option value="Chapter Test">📖 Chapter Test</option>
+        <option value="Paper Test">📝 Paper Test</option>
+        <option value="Full Mock">🏆 Full Foundation Mock</option>
+        <option value="Revision Test">🔁 Revision Test</option>`;
+    }
+    const testClass = document.getElementById("testClass");
+    if (testClass) {
+      testClass.innerHTML = `
+        <option value="Paper 1">📘 Paper 1: Accounting</option>
+        <option value="Paper 2">⚖️ Paper 2: Business Laws</option>
+        <option value="Paper 3">📐 Paper 3: Quantitative Aptitude</option>
+        <option value="Paper 4">📈 Paper 4: Business Economics</option>
+        <option value="Full">🎓 Full Foundation Syllabus</option>`;
+    }
+    const paperFields = [
+      ["testPhysics", "📘 Accounting (Max 100)"],
+      ["testChemistry", "⚖️ Business Laws (Max 100)"],
+    ];
+    paperFields.forEach(([id, label]) => {
+      const input = document.getElementById(id);
+      const labelEl = input?.closest(".form-group")?.querySelector("label");
+      if (input) {
+        input.max = "100";
+        input.placeholder = "0 - 100";
+      }
+      if (labelEl) labelEl.textContent = label;
+    });
+    const quantitativeInput = document.getElementById("testBiology");
+    const quantitativeLabel = quantitativeInput?.closest(".form-group")?.querySelector("label");
+    if (quantitativeInput) {
+      quantitativeInput.max = "100";
+      quantitativeInput.placeholder = "0 - 100";
+    }
+    if (quantitativeLabel) quantitativeLabel.textContent = "📐 Quantitative Aptitude (Max 100)";
+    document.getElementById("economicsField")?.removeAttribute("hidden");
+    if (document.getElementById("testEconomics")) document.getElementById("testEconomics").required = true;
+    const totalLabel = document.getElementById("liveTotalMarks");
+    if (totalLabel) totalLabel.textContent = "0 / 400";
+    const saveButton = document.querySelector("#mockTestForm button[type='submit']");
+    if (saveButton) saveButton.textContent = "+ Save CA Mock Score";
+    const averageTitles = document.querySelectorAll("#tab-mocktests .class-avg-title");
+    if (averageTitles[0]) averageTitles[0].textContent = "📘 Papers 1 & 2 Average";
+    if (averageTitles[1]) averageTitles[1].textContent = "📐 Papers 3 & 4 Average";
+    document.querySelectorAll("#tab-mocktests .class-avg-details").forEach((details) => {
+      details.innerHTML = `
+        <div>📘 Accounting: <strong class="ca-avg-physics">0/100</strong></div>
+        <div>⚖️ Business Laws: <strong class="ca-avg-chemistry">0/100</strong></div>
+        <div>📐 Quantitative Aptitude: <strong class="ca-avg-biology">0/100</strong></div>
+        <div>📈 Business Economics: <strong class="ca-avg-economics">0/100</strong></div>
+        <div>📝 Tests Logged: <strong class="ca-test-count">0</strong></div>`;
+    });
     }
   }
 }
@@ -1078,17 +1142,21 @@ function bindMockTestForm() {
   const pInput = document.getElementById("testPhysics");
   const cInput = document.getElementById("testChemistry");
   const bInput = document.getElementById("testBiology");
+  const eInput = document.getElementById("testEconomics");
   const totalBadge = document.getElementById("liveTotalMarks");
+  const isCA = currentUser?.trackerType === "ca";
+  const maxTotal = isCA ? 400 : 720;
 
   function calculateLiveTotal() {
-    const p = Math.max(0, Math.min(180, parseInt(pInput.value, 10) || 0));
-    const c = Math.max(0, Math.min(180, parseInt(cInput.value, 10) || 0));
-    const b = Math.max(0, Math.min(360, parseInt(bInput.value, 10) || 0));
-    const tot = p + c + b;
-    totalBadge.innerText = `${tot} / 720`;
+    const p = Math.max(0, Math.min(isCA ? 100 : 180, parseInt(pInput.value, 10) || 0));
+    const c = Math.max(0, Math.min(isCA ? 100 : 180, parseInt(cInput.value, 10) || 0));
+    const b = Math.max(0, Math.min(isCA ? 100 : 360, parseInt(bInput.value, 10) || 0));
+    const economics = isCA ? Math.max(0, Math.min(100, parseInt(eInput?.value, 10) || 0)) : 0;
+    const tot = p + c + b + economics;
+    totalBadge.innerText = `${tot} / ${maxTotal}`;
   }
 
-  [pInput, cInput, bInput].forEach((inp) => {
+  [pInput, cInput, bInput, eInput].forEach((inp) => {
     if (inp) inp.addEventListener("input", calculateLiveTotal);
   });
 
@@ -1102,6 +1170,7 @@ function bindMockTestForm() {
       const physics = parseInt(pInput.value, 10) || 0;
       const chemistry = parseInt(cInput.value, 10) || 0;
       const biology = parseInt(bInput.value, 10) || 0;
+      const economics = isCA ? parseInt(eInput?.value, 10) || 0 : 0;
       const remarks = document.getElementById("testRemarks").value.trim();
 
       try {
@@ -1116,6 +1185,7 @@ function bindMockTestForm() {
             physics,
             chemistry,
             biology,
+            economics,
             remarks,
           }),
         });
@@ -1124,8 +1194,8 @@ function bindMockTestForm() {
           appState.db.mockTests = data.mockTests;
         }
       } catch (e) {
-        const total = physics + chemistry + biology;
-        const pct = ((total / 720) * 100).toFixed(1);
+        const total = physics + chemistry + biology + economics;
+        const pct = ((total / maxTotal) * 100).toFixed(1);
         const newTest = {
           id: Date.now(),
           testName,
@@ -1135,6 +1205,7 @@ function bindMockTestForm() {
           physics,
           chemistry,
           biology,
+          economics,
           total,
           percentage: pct,
           remarks,
@@ -1151,7 +1222,7 @@ function bindMockTestForm() {
   }
 }
 
-function computeClassStats(testsList) {
+function computeClassStats(testsList, maxTotal = 720) {
   const count = testsList.length;
   if (count === 0) {
     return {
@@ -1159,6 +1230,7 @@ function computeClassStats(testsList) {
       avgPhy: 0,
       avgChem: 0,
       avgBio: 0,
+      avgEco: 0,
       avgPct: 0,
       count: 0,
     };
@@ -1166,76 +1238,88 @@ function computeClassStats(testsList) {
   let sumTotal = 0,
     sumPhy = 0,
     sumChem = 0,
-    sumBio = 0;
+    sumBio = 0,
+    sumEco = 0;
   testsList.forEach((t) => {
     sumTotal += t.total || 0;
     sumPhy += t.physics || 0;
     sumChem += t.chemistry || 0;
     sumBio += t.biology || 0;
+    sumEco += t.economics || 0;
   });
   const avgTotal = (sumTotal / count).toFixed(1);
   const avgPhy = (sumPhy / count).toFixed(1);
   const avgChem = (sumChem / count).toFixed(1);
   const avgBio = (sumBio / count).toFixed(1);
-  const avgPct = ((avgTotal / 720) * 100).toFixed(1);
-  return { avgTotal, avgPhy, avgChem, avgBio, avgPct, count };
+  const avgEco = (sumEco / count).toFixed(1);
+  const avgPct = ((avgTotal / maxTotal) * 100).toFixed(1);
+  return { avgTotal, avgPhy, avgChem, avgBio, avgEco, avgPct, count };
 }
 
 function renderMockTests() {
   const container = document.getElementById("mockTestList");
   if (!container) return;
   const tests = appState.db.mockTests || [];
+  const isCA = currentUser?.trackerType === "ca";
+  const maxTotal = isCA ? 400 : 720;
 
   // Filter Class 11 and Class 12 tests
-  const c11Tests = tests.filter((t) => (t.testClass || "11") === "11");
-  const c12Tests = tests.filter((t) => t.testClass === "12");
+  const c11Tests = isCA
+    ? tests.filter((t) => ["Paper 1", "Paper 2"].includes(t.testClass))
+    : tests.filter((t) => (t.testClass || "11") === "11");
+  const c12Tests = isCA
+    ? tests.filter((t) => ["Paper 3", "Paper 4"].includes(t.testClass))
+    : tests.filter((t) => t.testClass === "12");
 
-  const overallStats = computeClassStats(tests);
-  const c11Stats = computeClassStats(c11Tests);
-  const c12Stats = computeClassStats(c12Tests);
+  const overallStats = computeClassStats(tests, maxTotal);
+  const c11Stats = computeClassStats(c11Tests, maxTotal);
+  const c12Stats = computeClassStats(c12Tests, maxTotal);
 
   // Render Class 11 Stats
   const c11TotalEl = document.getElementById("c11AvgTotal");
   const c11PctEl = document.getElementById("c11AvgPct");
-  const c11PhyEl = document.getElementById("c11AvgPhy");
-  const c11ChemEl = document.getElementById("c11AvgChem");
-  const c11BioEl = document.getElementById("c11AvgBio");
-  const c11CountEl = document.getElementById("c11TestCount");
+  const c11PhyEl = isCA ? document.querySelectorAll(".ca-avg-physics")[0] : document.getElementById("c11AvgPhy");
+  const c11ChemEl = isCA ? document.querySelectorAll(".ca-avg-chemistry")[0] : document.getElementById("c11AvgChem");
+  const c11BioEl = isCA ? document.querySelectorAll(".ca-avg-biology")[0] : document.getElementById("c11AvgBio");
+  const c11EcoEl = isCA ? document.querySelectorAll(".ca-avg-economics")[0] : null;
+  const c11CountEl = isCA ? document.querySelectorAll(".ca-test-count")[0] : document.getElementById("c11TestCount");
 
-  if (c11TotalEl) c11TotalEl.innerText = `${c11Stats.avgTotal} / 720`;
+  if (c11TotalEl) c11TotalEl.innerText = `${c11Stats.avgTotal} / ${maxTotal}`;
   if (c11PctEl) c11PctEl.innerText = `${c11Stats.avgPct}% Accuracy`;
-  if (c11PhyEl) c11PhyEl.innerText = `${c11Stats.avgPhy}/180`;
-  if (c11ChemEl) c11ChemEl.innerText = `${c11Stats.avgChem}/180`;
-  if (c11BioEl) c11BioEl.innerText = `${c11Stats.avgBio}/360`;
+  if (c11PhyEl) c11PhyEl.innerText = `${c11Stats.avgPhy}/${isCA ? 100 : 180}`;
+  if (c11ChemEl) c11ChemEl.innerText = `${c11Stats.avgChem}/${isCA ? 100 : 180}`;
+  if (c11BioEl) c11BioEl.innerText = `${c11Stats.avgBio}/${isCA ? 100 : 360}`;
+  if (c11EcoEl) c11EcoEl.innerText = `${c11Stats.avgEco}/100`;
   if (c11CountEl) c11CountEl.innerText = `${c11Stats.count}`;
 
   // Render Class 12 Stats
   const c12TotalEl = document.getElementById("c12AvgTotal");
   const c12PctEl = document.getElementById("c12AvgPct");
-  const c12PhyEl = document.getElementById("c12AvgPhy");
-  const c12ChemEl = document.getElementById("c12AvgChem");
-  const c12BioEl = document.getElementById("c12AvgBio");
-  const c12CountEl = document.getElementById("c12TestCount");
+  const c12PhyEl = isCA ? document.querySelectorAll(".ca-avg-physics")[1] : document.getElementById("c12AvgPhy");
+  const c12ChemEl = isCA ? document.querySelectorAll(".ca-avg-chemistry")[1] : document.getElementById("c12AvgChem");
+  const c12BioEl = isCA ? document.querySelectorAll(".ca-avg-biology")[1] : document.getElementById("c12AvgBio");
+  const c12EcoEl = isCA ? document.querySelectorAll(".ca-avg-economics")[1] : null;
+  const c12CountEl = isCA ? document.querySelectorAll(".ca-test-count")[1] : document.getElementById("c12TestCount");
 
-  if (c12TotalEl) c12TotalEl.innerText = `${c12Stats.avgTotal} / 720`;
+  if (c12TotalEl) c12TotalEl.innerText = `${c12Stats.avgTotal} / ${maxTotal}`;
   if (c12PctEl) c12PctEl.innerText = `${c12Stats.avgPct}% Accuracy`;
-  if (c12PhyEl) c12PhyEl.innerText = `${c12Stats.avgPhy}/180`;
-  if (c12ChemEl) c12ChemEl.innerText = `${c12Stats.avgChem}/180`;
-  if (c12BioEl) c12BioEl.innerText = `${c12Stats.avgBio}/360`;
+  if (c12PhyEl) c12PhyEl.innerText = `${c12Stats.avgPhy}/${isCA ? 100 : 180}`;
+  if (c12ChemEl) c12ChemEl.innerText = `${c12Stats.avgChem}/${isCA ? 100 : 180}`;
+  if (c12BioEl) c12BioEl.innerText = `${c12Stats.avgBio}/${isCA ? 100 : 360}`;
+  if (c12EcoEl) c12EcoEl.innerText = `${c12Stats.avgEco}/100`;
   if (c12CountEl) c12CountEl.innerText = `${c12Stats.count}`;
 
   // Overall Bar
   const avgTotalEl = document.getElementById("avgTotalScore");
   const avgPctEl = document.getElementById("avgPercentage");
   const avgCountEl = document.getElementById("avgTestCount");
-  if (avgTotalEl) avgTotalEl.innerText = `${overallStats.avgTotal} / 720`;
+  if (avgTotalEl) avgTotalEl.innerText = `${overallStats.avgTotal} / ${maxTotal}`;
   if (avgPctEl) avgPctEl.innerText = `${overallStats.avgPct}%`;
   if (avgCountEl) avgCountEl.innerText = `${overallStats.count}`;
 
   container.innerHTML = "";
   if (tests.length === 0) {
-    container.innerHTML =
-      '<div style="text-align:center; padding:20px; color:#94a3b8;">No AAKASH tests recorded yet. Add your AAKASH AIATS/NRT/TT test score above!</div>';
+    container.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">${isCA ? "No CA Foundation tests recorded yet. Add your first mock score above!" : "No AAKASH tests recorded yet. Add your AAKASH AIATS/NRT/TT test score above!"}</div>`;
     return;
   }
 
@@ -1247,14 +1331,15 @@ function renderMockTests() {
         : typeLabel === "OMT"
           ? "🌐 OMT"
           : typeLabel;
-    const classTag =
-      t.testClass === "12"
+    const classTag = isCA
+      ? (t.testClass || "Full Foundation")
+      : t.testClass === "12"
         ? "Class 12"
         : t.testClass === "Full"
           ? "Full Syllabus"
           : "Class 11";
     const classBadgeColor =
-      t.testClass === "12"
+      (isCA ? ["Paper 3", "Paper 4"].includes(t.testClass) : t.testClass === "12")
         ? "background:#f3e8ff; color:#6b21a8;"
         : "background:#e0e7ff; color:#3730a3;";
 
@@ -1269,15 +1354,16 @@ function renderMockTests() {
           <span class="test-date-txt">📅 ${t.testDate}</span>
         </div>
         <div class="test-marks-detail">
-          <span>⚡ Physics: ${t.physics}/180</span>
-          <span>🧪 Chemistry: ${t.chemistry}/180</span>
-          <span>🧬 Biology: ${t.biology}/360</span>
+          <span>${isCA ? "📘 Accounting" : "⚡ Physics"}: ${t.physics}/${isCA ? 100 : 180}</span>
+          <span>${isCA ? "⚖️ Business Laws" : "🧪 Chemistry"}: ${t.chemistry}/${isCA ? 100 : 180}</span>
+          <span>${isCA ? "📐 Quantitative Aptitude" : "🧬 Biology"}: ${t.biology}/${isCA ? 100 : 360}</span>
+          ${isCA ? `<span>📈 Business Economics: ${t.economics || 0}/100</span>` : ""}
         </div>
         ${t.remarks ? `<div class="test-remarks">💬 ${escapeHtml(t.remarks)}</div>` : ""}
       </div>
       <div class="test-score-badge">
         <div class="total-num">${t.total}</div>
-        <div class="total-max">/ 720</div>
+        <div class="total-max">/ ${maxTotal}</div>
         <div class="pct-num">${t.percentage}%</div>
         <button class="btn-del" onclick="deleteMockTest(${t.id})" style="margin-top:4px;">✕</button>
       </div>
