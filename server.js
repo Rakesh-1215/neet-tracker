@@ -76,6 +76,7 @@ if (MONGODB_URI) {
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const SYLLABUS_FILE = path.join(DATA_DIR, 'syllabus.json');
+const CA_SYLLABUS_FILE = path.join(DATA_DIR, 'ca-syllabus.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const USER_DATA_DIR = path.join(DATA_DIR, 'users');
 
@@ -217,16 +218,23 @@ async function requireAuth(req, res, next) {
 // Load Default Syllabus
 // ============================================================
 
-let defaultSyllabus = [];
-
-if (fs.existsSync(SYLLABUS_FILE)) {
+function loadSyllabus(file, label) {
+  if (!fs.existsSync(file)) return [];
   try {
-    defaultSyllabus = JSON.parse(
-      fs.readFileSync(SYLLABUS_FILE, 'utf8')
-    );
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch (e) {
-    console.error('Error parsing syllabus.json:', e);
+    console.error(`Error parsing ${label}:`, e);
+    return [];
   }
+}
+
+const syllabusByTracker = {
+  neet: loadSyllabus(SYLLABUS_FILE, 'syllabus.json'),
+  ca: loadSyllabus(CA_SYLLABUS_FILE, 'ca-syllabus.json')
+};
+
+function syllabusForTrackerType(trackerType = 'neet') {
+  return syllabusByTracker[trackerType === 'ca' ? 'ca' : 'neet'];
 }
 
 
@@ -306,12 +314,13 @@ function getCurrentWeekStart() {
 // Create Initial Database
 // ============================================================
 
-function createInitialDB() {
+function createInitialDB(trackerType = 'neet') {
   const currentWeek = getWeekNumber(new Date());
+  const trackerSyllabus = syllabusForTrackerType(trackerType);
 
   const initialSyllabusProgress = {};
 
-  defaultSyllabus.forEach(ch => {
+  trackerSyllabus.forEach(ch => {
     initialSyllabusProgress[ch.id] = {
       theory: false,
       ncert: false,
@@ -432,10 +441,11 @@ function hasMeaningfulTrackerData(data) {
   );
 }
 
-async function readDB(ownerId = null) {
+async function readDB(ownerId = null, trackerType = 'neet') {
 
   const stateKey = stateKeyFor(ownerId);
   const stateFile = localStateFile(ownerId);
+  const trackerSyllabus = syllabusForTrackerType(trackerType);
 
   if (useMongoDB) {
     try {
@@ -445,7 +455,7 @@ async function readDB(ownerId = null) {
       });
 
       if (!doc) {
-        let initial = createInitialDB();
+        let initial = createInitialDB(trackerType);
 
         // The first configured legacy owner receives a copy of the existing
         // NEET tracker without deleting or mutating the legacy record.
@@ -509,7 +519,7 @@ async function readDB(ownerId = null) {
 
   if (!fs.existsSync(stateFile)) {
 
-    let initial = createInitialDB();
+    let initial = createInitialDB(trackerType);
 
     if (ownerId && LEGACY_OWNER_EMAIL) {
       const owner = localUsers().find(user => user.id === ownerId);
@@ -551,7 +561,7 @@ async function readDB(ownerId = null) {
 
       data.syllabusProgress = {};
 
-      defaultSyllabus.forEach(ch => {
+      trackerSyllabus.forEach(ch => {
         data.syllabusProgress[ch.id] = {
           theory: false,
           ncert: false,
@@ -804,7 +814,7 @@ app.use('/api', (req, res, next) => {
 // Get full app state & default syllabus
 app.get('/api/state', async (req, res) => {
 
-  const db = await readDB(req.user.id);
+  const db = await readDB(req.user.id, req.user.trackerType);
 
   const currentWeek =
     getWeekNumber(new Date());
@@ -830,7 +840,7 @@ app.get('/api/state', async (req, res) => {
 
   res.json({
     syllabusList: [
-      ...defaultSyllabus,
+      ...syllabusForTrackerType(req.user.trackerType),
       ...(db.customChapters || [])
     ],
 

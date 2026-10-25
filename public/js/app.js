@@ -91,6 +91,56 @@ function applyTrackerBranding() {
   if (userLabel && currentUser) userLabel.textContent = currentUser.name || currentUser.email;
   const logoutButton = document.getElementById("logout-btn");
   if (logoutButton) logoutButton.hidden = !currentUser;
+
+  if (isCA) {
+    const subjects = [
+      ["physics", "📘 Accounting"],
+      ["chemistry", "⚖️ Business Laws"],
+      ["botony", "📐 Quantitative Aptitude"],
+      ["zoology", "📈 Business Economics"],
+    ];
+    document.querySelectorAll(".subj-label").forEach((label, index) => {
+      if (subjects[index]) label.textContent = subjects[index][1];
+    });
+    const subjectFilter = document.getElementById("subjectFilter");
+    if (subjectFilter) {
+      subjectFilter.innerHTML = `<option value="all">All Papers</option>${subjects
+        .map(([, label]) => `<option value="${label.replace(/^\S+\s/, "")}">${label}</option>`)
+        .join("")}`;
+    }
+    const classFilter = document.getElementById("classFilter");
+    if (classFilter) {
+      classFilter.innerHTML = ["all", "Paper 1", "Paper 2", "Paper 3", "Paper 4"]
+        .map((value) => `<option value="${value}">${value === "all" ? "All Papers" : value}</option>`)
+        .join("");
+    }
+    const syllabusTitle = document.querySelector("#tab-syllabus .section-title");
+    if (syllabusTitle) syllabusTitle.textContent = "📚 CA Foundation Syllabus Master Checklist";
+    const syllabusDescription = document.querySelector("#tab-syllabus .section-desc");
+    if (syllabusDescription) syllabusDescription.textContent = "Track your progress across Accounting, Business Laws, Quantitative Aptitude, and Business Economics.";
+    const taskSubject = document.getElementById("subjectSelect");
+    if (taskSubject) {
+      taskSubject.innerHTML = subjects
+        .map(([, label]) => `<option value="${label.replace(/^\S+\s/, "")}">${label}</option>`)
+        .join("");
+    }
+  }
+}
+
+function questionSubjects() {
+  return currentUser?.trackerType === "ca"
+    ? [
+        ["physics", "📘 Accounting"],
+        ["chemistry", "⚖️ Business Laws"],
+        ["botony", "📐 Quantitative Aptitude"],
+        ["zoology", "📈 Business Economics"],
+      ]
+    : [
+        ["physics", "⚡ Physics"],
+        ["chemistry", "🧪 Chemistry"],
+        ["botony", "🌿 Botany"],
+        ["zoology", "🐾 Zoology"],
+      ];
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
@@ -368,12 +418,10 @@ function renderSelectedDaySummary() {
   label.innerText = selectedDateKey === today
     ? `Today · ${formatSelectedDate(selectedDateKey)}`
     : formatSelectedDate(selectedDateKey);
-  breakdownEl.innerHTML = `
-    <span>⚡ Physics: ${physics}</span>
-    <span>🧪 Chemistry: ${chemistry}</span>
-    <span>🌿 Botany: ${botany}</span>
-    <span>🐾 Zoology: ${zoology}</span>
-  `;
+  const counts = { physics, chemistry, botony: botany, zoology };
+  breakdownEl.innerHTML = questionSubjects()
+    .map(([key, label]) => `<span>${label}: ${counts[key]}</span>`)
+    .join("");
 }
 
 function bindSelectedDaySummary() {
