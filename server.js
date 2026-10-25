@@ -410,6 +410,22 @@ function localStateFile(ownerId) {
   return ownerId ? path.join(USER_DATA_DIR, `${String(ownerId).replace(/[^a-zA-Z0-9_-]/g, '_')}.json`) : DB_FILE;
 }
 
+function hasMeaningfulTrackerData(data) {
+  if (!data || typeof data !== 'object') return false;
+  return Boolean(
+    (Array.isArray(data.tasks) && data.tasks.length) ||
+    (Array.isArray(data.mockTests) && data.mockTests.length) ||
+    (Array.isArray(data.customChapters) && data.customChapters.length) ||
+    (data.dailyLog && Object.keys(data.dailyLog).length) ||
+    (data.questionLog && Object.keys(data.questionLog).length) ||
+    (data.syllabusProgress && Object.values(data.syllabusProgress).some(progress =>
+      progress && (progress.theory || progress.ncert || progress.pyq || Number(progress.revisions) > 0)
+    )) ||
+    Number(data.streakData?.currentStreak) > 0 ||
+    Number(data.streakData?.bestStreak) > 0
+  );
+}
+
 async function readDB(ownerId = null) {
 
   const stateKey = stateKeyFor(ownerId);
@@ -444,6 +460,28 @@ async function readDB(ownerId = null) {
           key: stateKey,
           ownerId
         });
+      } else if (ownerId && LEGACY_OWNER_EMAIL) {
+        const owner = await UserModel.findById(ownerId);
+        const current = doc.toObject();
+        const legacy = await StateModel.findOne({ key: 'main_db' });
+
+        // Repair an account created before migration was configured, but
+        // never overwrite meaningful data already belonging to that user.
+        if (
+          owner && owner.email === LEGACY_OWNER_EMAIL &&
+          !hasMeaningfulTrackerData(current) &&
+          legacy && hasMeaningfulTrackerData(legacy.toObject())
+        ) {
+          const migrated = legacy.toObject();
+          delete migrated._id;
+          delete migrated.__v;
+          doc = await StateModel.findOneAndUpdate(
+            { key: stateKey },
+            { $set: { ...migrated, key: stateKey, ownerId } },
+            { new: true }
+          );
+          console.log(`✅ Repaired legacy tracker data for ${owner.email}`);
+        }
       }
 
       const data = doc.toObject();
@@ -485,6 +523,22 @@ async function readDB(ownerId = null) {
     const data = JSON.parse(
       fs.readFileSync(stateFile, 'utf8')
     );
+
+    if (ownerId && LEGACY_OWNER_EMAIL) {
+      const owner = localUsers().find(user => user.id === ownerId);
+      const legacy = fs.existsSync(DB_FILE)
+        ? JSON.parse(fs.readFileSync(DB_FILE, 'utf8'))
+        : null;
+
+      if (
+        owner && owner.email === LEGACY_OWNER_EMAIL &&
+        !hasMeaningfulTrackerData(data) &&
+        hasMeaningfulTrackerData(legacy)
+      ) {
+        writeDBLocal(legacy, ownerId);
+        return legacy;
+      }
+    }
 
 
     if (!data.syllabusProgress) {
