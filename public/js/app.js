@@ -51,6 +51,29 @@ function formatHours(value) {
   return roundHours(value).toFixed(2).replace(/\.?0+$/, "");
 }
 
+function ensureStateShape() {
+  if (!appState || typeof appState !== "object") appState = { syllabusList: [], db: {} };
+  if (!Array.isArray(appState.syllabusList)) appState.syllabusList = [];
+  if (!appState.db || typeof appState.db !== "object") appState.db = {};
+
+  const db = appState.db;
+  if (!Array.isArray(db.tasks)) db.tasks = [];
+  if (!db.dailyLog || typeof db.dailyLog !== "object") db.dailyLog = {};
+  if (!db.questionLog || typeof db.questionLog !== "object") db.questionLog = {};
+  if (!db.syllabusProgress || typeof db.syllabusProgress !== "object") db.syllabusProgress = {};
+  if (!Array.isArray(db.customChapters)) db.customChapters = [];
+  if (!Array.isArray(db.mockTests)) db.mockTests = [];
+  if (!db.streakData || typeof db.streakData !== "object") {
+    db.streakData = { currentStreak: 0, bestStreak: 0, lastActiveDate: null, streakHistory: {} };
+  }
+  if (!db.streakData.streakHistory || typeof db.streakData.streakHistory !== "object") {
+    db.streakData.streakHistory = {};
+  }
+  if (!db.lastWeekQuestions || typeof db.lastWeekQuestions !== "object") {
+    db.lastWeekQuestions = { physics: 0, chemistry: 0, botony: 0, zoology: 0, total: 0 };
+  }
+}
+
 function applyTrackerBranding() {
   const isCA = currentUser?.trackerType === "ca";
   const title = isCA ? "📘 CA Prep Tracker" : "🩺 NEET Master Pro";
@@ -181,6 +204,7 @@ async function loadState() {
     if (res.ok) {
       const data = await res.json();
       appState = data;
+      ensureStateShape();
     } else {
       throw new Error("API server returned error status");
     }
@@ -223,6 +247,7 @@ function loadOfflineState() {
   if (saved) {
     try {
       appState.db = JSON.parse(saved);
+      ensureStateShape();
     } catch (e) {
       console.error("Offline parse error:", e);
     }
@@ -420,6 +445,8 @@ function checkTodayActivity() {
 }
 
 function updateStreak() {
+  ensureStateShape();
+
   if (!appState.db.streakData) {
     appState.db.streakData = {
       currentStreak: 0,
@@ -1509,6 +1536,7 @@ function importFromJSON(e) {
       const parsed = JSON.parse(event.target.result);
       if (parsed.db) {
         appState.db = parsed.db;
+        ensureStateShape();
         if (parsed.syllabusList) appState.syllabusList = parsed.syllabusList;
         await saveStateBackend();
         renderAll();
