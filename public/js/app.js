@@ -66,6 +66,16 @@ function applyTrackerBranding() {
   document.getElementById("tests-tab-label")?.replaceChildren(document.createTextNode(isCA ? "📝 Mock Tests" : "📝 Coaching Tests"));
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 function showAuthError(message = "") {
   const error = document.getElementById("auth-error");
   if (!error) return;
@@ -149,7 +159,7 @@ async function loadState() {
 
   let authResponse;
   try {
-    authResponse = await fetch("/api/auth/me");
+    authResponse = await fetchWithTimeout("/api/auth/me");
   } catch (error) {
     showAuthScreen();
     hideAppLoader();
@@ -167,7 +177,7 @@ async function loadState() {
   applyTrackerBranding();
   hideAuthScreen();
   try {
-    const res = await fetch("/api/state");
+    const res = await fetchWithTimeout("/api/state");
     if (res.ok) {
       const data = await res.json();
       appState = data;
@@ -1562,5 +1572,19 @@ window.addEventListener("DOMContentLoaded", () => {
     .getElementById("classFilter")
     ?.addEventListener("change", renderSyllabus);
 
-  loadState();
+  loadState().catch((error) => {
+    console.error("Tracker startup error:", error);
+    showAuthScreen();
+    hideAppLoader();
+  });
+
+  // Never leave a user behind a loading screen if a deployment or network
+  // request stalls. The login screen remains available as a recovery path.
+  window.setTimeout(() => {
+    const loader = document.getElementById("app-loader");
+    if (loader && !loader.classList.contains("is-hidden")) {
+      showAuthScreen();
+      hideAppLoader();
+    }
+  }, 12000);
 });
