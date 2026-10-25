@@ -81,6 +81,10 @@ function hideAuthScreen() {
   document.body.classList.remove("auth-required");
 }
 
+function hideAppLoader() {
+  document.getElementById("app-loader")?.classList.add("is-hidden");
+}
+
 async function submitAuth(url, payload) {
   const response = await fetch(url, {
     method: "POST",
@@ -141,9 +145,20 @@ function initAuth() {
 
 // API Helpers
 async function loadState() {
-  const authResponse = await fetch("/api/auth/me");
+  document.getElementById("app-loader")?.classList.remove("is-hidden");
+
+  let authResponse;
+  try {
+    authResponse = await fetch("/api/auth/me");
+  } catch (error) {
+    showAuthScreen();
+    hideAppLoader();
+    return false;
+  }
+
   if (!authResponse.ok) {
     showAuthScreen();
+    hideAppLoader();
     return false;
   }
 
@@ -168,6 +183,7 @@ async function loadState() {
   }
   updateStreak();
   renderAll();
+  hideAppLoader();
   return true;
 }
 
