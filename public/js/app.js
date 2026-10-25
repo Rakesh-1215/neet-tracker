@@ -87,6 +87,10 @@ function applyTrackerBranding() {
   document.getElementById("auth-subtitle")?.replaceChildren(document.createTextNode(subtitle));
   document.getElementById("syllabus-tab-label")?.replaceChildren(document.createTextNode(isCA ? "📚 CA Syllabus" : "📚 NCERT Syllabus"));
   document.getElementById("tests-tab-label")?.replaceChildren(document.createTextNode(isCA ? "📝 Mock Tests" : "📝 Coaching Tests"));
+  const userLabel = document.getElementById("user-label");
+  if (userLabel && currentUser) userLabel.textContent = currentUser.name || currentUser.email;
+  const logoutButton = document.getElementById("logout-btn");
+  if (logoutButton) logoutButton.hidden = !currentUser;
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
@@ -132,6 +136,11 @@ async function submitAuth(url, payload) {
 
 function initAuth() {
   document.body.classList.add("auth-required");
+
+  document.getElementById("logout-btn")?.addEventListener("click", async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.reload();
+  });
 
   document.getElementById("show-register")?.addEventListener("click", () => {
     document.getElementById("login-form").hidden = true;

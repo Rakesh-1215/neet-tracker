@@ -284,6 +284,35 @@ body.auth-required .auth-screen {
   margin-top: 4px;
 }
 
+.account-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 28px;
+  margin-top: 8px;
+}
+
+#user-label {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.logout-btn {
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text-muted);
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  color: var(--danger);
+  border-color: #fecaca;
+}
+
 /* Nav Tabs */
 .nav-tabs {
   display: flex;
