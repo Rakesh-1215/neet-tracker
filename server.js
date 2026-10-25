@@ -412,17 +412,23 @@ function localStateFile(ownerId) {
 
 function hasMeaningfulTrackerData(data) {
   if (!data || typeof data !== 'object') return false;
+  const initial = createInitialDB();
+  const hasChangedMockTests = JSON.stringify(data.mockTests || []) !== JSON.stringify(initial.mockTests || []);
+  const hasChangedStreak =
+    Number(data.streakData?.currentStreak) !== Number(initial.streakData?.currentStreak) ||
+    Number(data.streakData?.bestStreak) !== Number(initial.streakData?.bestStreak) ||
+    Object.keys(data.streakData?.streakHistory || {}).length > 1;
+
   return Boolean(
     (Array.isArray(data.tasks) && data.tasks.length) ||
-    (Array.isArray(data.mockTests) && data.mockTests.length) ||
+    hasChangedMockTests ||
     (Array.isArray(data.customChapters) && data.customChapters.length) ||
     (data.dailyLog && Object.keys(data.dailyLog).length) ||
     (data.questionLog && Object.keys(data.questionLog).length) ||
     (data.syllabusProgress && Object.values(data.syllabusProgress).some(progress =>
       progress && (progress.theory || progress.ncert || progress.pyq || Number(progress.revisions) > 0)
     )) ||
-    Number(data.streakData?.currentStreak) > 0 ||
-    Number(data.streakData?.bestStreak) > 0
+    hasChangedStreak
   );
 }
 
