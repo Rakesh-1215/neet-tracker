@@ -381,7 +381,6 @@ async function loadState() {
   }
   updateStreak();
   renderAll();
-  loadRankings();
   hideAppLoader();
   return true;
 }
@@ -438,47 +437,6 @@ function initTabs() {
       if (targetContent) targetContent.classList.add("active");
     });
   });
-}
-
-function renderRankings(data) {
-  const container = document.getElementById("rankingList");
-  const status = document.getElementById("rankingStatus");
-  if (!container) return;
-  const rankings = data?.rankings || [];
-  status.textContent = rankings.length
-    ? `Study time for ${data.date}`
-    : "No registered users have study time for this date yet.";
-  container.innerHTML = rankings.length
-    ? rankings.map((item) => `
-      <div class="ranking-row ${item.userId === currentUser?.id ? "ranking-me" : ""}">
-        <span class="ranking-position">${item.rank <= 3 ? ["🥇", "🥈", "🥉"][item.rank - 1] : `#${item.rank}`}</span>
-        <span class="ranking-name">${escapeHtml(item.name)}${item.userId === currentUser?.id ? " (You)" : ""}<small>${item.trackerType === "ca" ? "CA Foundation" : "NEET"}</small></span>
-        <strong>${formatHours(item.hours)}h</strong>
-      </div>
-    `).join("")
-    : '<div class="ranking-empty">No study time recorded for this date.</div>';
-}
-
-async function loadRankings(date = document.getElementById("rankingDate")?.value || getTodayDateKey()) {
-  const status = document.getElementById("rankingStatus");
-  if (!status) return;
-  status.textContent = "Loading rankings...";
-  try {
-    const response = await fetch(`/api/rankings?date=${encodeURIComponent(date)}`);
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Unable to load rankings.");
-    renderRankings(data);
-  } catch (error) {
-    status.textContent = error.message;
-    document.getElementById("rankingList").innerHTML = "";
-  }
-}
-
-function initRankings() {
-  const input = document.getElementById("rankingDate");
-  if (!input) return;
-  input.value = getTodayDateKey();
-  input.addEventListener("change", () => loadRankings(input.value));
 }
 
 // Class Toggle inside Goals Tab
@@ -1472,7 +1430,16 @@ async function deleteMockTest(id) {
 }
 
 // Tasks & Goals Logic
+function getTaskViewDate() {
+  return document.getElementById("taskListDate")?.value || getTodayDateKey();
+}
+
 function bindTasksLogic() {
+  const dateInput = document.getElementById("taskListDate");
+  if (dateInput) {
+    dateInput.value = getTodayDateKey();
+    dateInput.addEventListener("change", renderTasksAndHours);
+  }
   const addBtn = document.getElementById("addTaskBtn");
   if (addBtn) {
     addBtn.onclick = () => {
@@ -1489,7 +1456,7 @@ function bindTasksLogic() {
         subject,
         hrs,
         cls: currentSelectedClass,
-        createdOn: getTodayDateKey(),
+        createdOn: getTaskViewDate(),
         completed: false,
         completedOn: null,
       });
@@ -1506,7 +1473,7 @@ function bindTasksLogic() {
 function toggleTask(id) {
   const task = appState.db.tasks.find((t) => t.id === id);
 
-  const day = getTodayDateKey();
+  const day = getTaskViewDate();
 
   if (task) {
     if (!task.completed) {
@@ -1567,8 +1534,13 @@ function renderTasksAndHours() {
   let total11 = 0;
   let total12 = 0;
 
-  // Render Tasks
-  (appState.db.tasks || []).forEach((task) => {
+  const selectedTaskDate = getTaskViewDate();
+  const visibleTasks = (appState.db.tasks || []).filter(
+    (task) => taskDateKey(task) === selectedTaskDate,
+  );
+
+  // Render tasks for the selected date only.
+  visibleTasks.forEach((task) => {
     if (task.completed) {
       if (task.cls === "11") {
         total11 += Number(task.hrs) || 0;
@@ -1609,9 +1581,9 @@ function renderTasksAndHours() {
     `;
   });
 
-  if ((appState.db.tasks || []).length === 0) {
+  if (visibleTasks.length === 0) {
     list.innerHTML =
-      '<div style="text-align:center; padding:20px; color:#94a3b8;">➕ Add weekly goals above</div>';
+      `<div style="text-align:center; padding:20px; color:#94a3b8;">No tasks recorded for ${formatTaskDate(selectedTaskDate)}.</div>`;
   }
 
   // Update Class 11 and Class 12 progress bars
@@ -1867,7 +1839,6 @@ window.deleteTask = deleteTask;
 window.addEventListener("DOMContentLoaded", () => {
   initAuth();
   initTabs();
-  initRankings();
   initClassToggle();
   bindQuestionDirectInputs();
   bindSelectedDaySummary();

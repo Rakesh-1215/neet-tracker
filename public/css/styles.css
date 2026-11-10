@@ -829,15 +829,8 @@ body.auth-required .auth-screen {
 .password-checkbox { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
 .password-checkbox input { width: auto; }
 .password-form { display: grid; gap: 12px; max-width: 520px; }
-.ranking-controls { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
-.ranking-controls input { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 9px; }
-.ranking-list { display: grid; gap: 8px; margin-top: 12px; }
-.ranking-row { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; }
-.ranking-me { border-color: #38bdf8; background: #eff6ff; }
-.ranking-position { font-size: 18px; font-weight: 800; }
-.ranking-name { font-weight: 700; color: #0f172a; }
-.ranking-name small { display: block; color: #64748b; font-size: 11px; font-weight: 500; margin-top: 2px; }
-.ranking-empty { text-align: center; color: #94a3b8; padding: 20px; }
+.task-date-selector { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-weight: 700; color: #475569; }
+.task-date-selector input { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 9px; }
 .tag-Botany { background: #ede9fe; color: #5b21b6; }
 .tag-Zoology { background: #fef3c7; color: #92400e; }
 

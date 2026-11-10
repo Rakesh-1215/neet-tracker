@@ -66,7 +66,6 @@
         <button id="tests-tab-label" class="nav-btn" data-tab="mocktests">📝 Coaching Tests</button>
         <button class="nav-btn" data-tab="goals">🎯 Study Plan</button>
         <button class="nav-btn" data-tab="taskhistory">🗓️ Task History</button>
-        <button class="nav-btn" data-tab="rankings">🏆 Rankings</button>
         <button class="nav-btn" data-tab="backup">⚙️ Backup</button>
       </nav>
       <div class="account-bar">
@@ -362,6 +361,10 @@
     <section id="tab-goals" class="tab-content">
       <div class="card">
         <div class="section-title">📝 Weekly Study Goals & Tasks</div>
+        <div class="task-date-selector">
+          <label for="taskListDate">Show tasks for</label>
+          <input type="date" id="taskListDate">
+        </div>
         <div class="input-row">
           <input type="text" id="desc" placeholder="Topic (e.g. Thermodynamics, Optics)">
           <select id="subjectSelect" class="subject-select">
@@ -393,21 +396,7 @@
       </div>
     </section>
 
-    <!-- TAB 6: DAILY STUDY RANKINGS -->
-    <section id="tab-rankings" class="tab-content">
-      <div class="card">
-        <div class="section-title">🏆 Daily Study Rankings</div>
-        <p class="section-desc">Compare total study time for the selected day. Only names, tracker type, and hours are shown.</p>
-        <div class="ranking-controls">
-          <label for="rankingDate">Select date</label>
-          <input type="date" id="rankingDate">
-        </div>
-        <div id="rankingStatus" class="sub-text"></div>
-        <div id="rankingList" class="ranking-list"></div>
-      </div>
-    </section>
-
-    <!-- TAB 7: BACKUP & DATA -->
+    <!-- TAB 6: BACKUP & DATA -->
     <section id="tab-backup" class="tab-content">
       <div class="card">
         <div class="section-title">⚙️ Data Management & Backup</div>

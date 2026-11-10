@@ -273,12 +273,6 @@ function getWeekNumber(d) {
 }
 
 
-function roundHours(value) {
-  const number = Number(value);
-  if (!Number.isFinite(number)) return 0;
-  return Math.round((number + Number.EPSILON) * 100) / 100;
-}
-
 // Returns date as YYYY-MM-DD
 function getDateKey(date = new Date(), offset = 0) {
   const d = new Date(date);
@@ -904,38 +898,6 @@ app.post('/api/auth/change-password', async (req, res) => {
   }
 
   res.json({ success: true, message: 'Password updated successfully.' });
-});
-
-app.get('/api/rankings', async (req, res) => {
-  const requestedDate = String(req.query.date || getDateKey()).trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) {
-    return res.status(400).json({ error: 'Use a date in YYYY-MM-DD format.' });
-  }
-
-  const users = useMongoDB ? await UserModel.find({}).lean() : localUsers();
-  const rankings = await Promise.all(users.map(async (user) => {
-    const ownerId = String(user._id || user.id);
-    try {
-      const db = await readDB(ownerId, user.trackerType);
-      return {
-        userId: ownerId,
-        name: user.name || 'Study tracker user',
-        trackerType: user.trackerType || 'neet',
-        hours: roundHours(Number(db.dailyLog?.[requestedDate]) || 0)
-      };
-    } catch (error) {
-      console.error(`Ranking read failed for user ${ownerId}:`, error);
-      return {
-        userId: ownerId,
-        name: user.name || 'Study tracker user',
-        trackerType: user.trackerType || 'neet',
-        hours: 0
-      };
-    }
-  }));
-
-  rankings.sort((a, b) => b.hours - a.hours || a.name.localeCompare(b.name));
-  res.json({ date: requestedDate, rankings: rankings.map((item, index) => ({ ...item, rank: index + 1 })) });
 });
 
 // ============================================================
