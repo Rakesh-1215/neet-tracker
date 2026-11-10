@@ -28,6 +28,7 @@
         <h2>Welcome back</h2>
         <label>Email<input id="login-email" type="email" autocomplete="email" required></label>
         <label>Password<input id="login-password" type="password" autocomplete="current-password" required></label>
+        <label class="password-toggle"><input id="login-show-password" type="checkbox"> Show password</label>
         <button class="auth-submit" type="submit">Log in</button>
         <button class="auth-switch" id="show-register" type="button">Create a new account</button>
       </form>
@@ -37,6 +38,7 @@
         <label>Name<input id="register-name" type="text" autocomplete="name" required></label>
         <label>Email<input id="register-email" type="email" autocomplete="email" required></label>
         <label>Password<input id="register-password" type="password" minlength="8" autocomplete="new-password" required></label>
+        <label class="password-toggle"><input id="register-show-password" type="checkbox"> Show password</label>
         <label>Preparation type
           <select id="register-tracker-type">
             <option value="neet">NEET</option>
@@ -64,6 +66,7 @@
         <button id="tests-tab-label" class="nav-btn" data-tab="mocktests">📝 Coaching Tests</button>
         <button class="nav-btn" data-tab="goals">🎯 Study Plan</button>
         <button class="nav-btn" data-tab="taskhistory">🗓️ Task History</button>
+        <button class="nav-btn" data-tab="rankings">🏆 Rankings</button>
         <button class="nav-btn" data-tab="backup">⚙️ Backup</button>
       </nav>
       <div class="account-bar">
@@ -390,7 +393,21 @@
       </div>
     </section>
 
-    <!-- TAB 6: BACKUP & DATA -->
+    <!-- TAB 6: DAILY STUDY RANKINGS -->
+    <section id="tab-rankings" class="tab-content">
+      <div class="card">
+        <div class="section-title">🏆 Daily Study Rankings</div>
+        <p class="section-desc">Compare total study time for the selected day. Only names, tracker type, and hours are shown.</p>
+        <div class="ranking-controls">
+          <label for="rankingDate">Select date</label>
+          <input type="date" id="rankingDate">
+        </div>
+        <div id="rankingStatus" class="sub-text"></div>
+        <div id="rankingList" class="ranking-list"></div>
+      </div>
+    </section>
+
+    <!-- TAB 7: BACKUP & DATA -->
     <section id="tab-backup" class="tab-content">
       <div class="card">
         <div class="section-title">⚙️ Data Management & Backup</div>
@@ -407,6 +424,18 @@
           
           <button class="btn-secondary" id="manualResetBtn" style="background:#475569;">🗑️ Reset Weekly Hours</button>
         </div>
+      </div>
+      <div class="card">
+        <div class="section-title">🔐 Account Security</div>
+        <p class="section-desc">Change your password securely while signed in.</p>
+        <form id="passwordForm" class="password-form">
+          <label>Current password<input id="currentPassword" type="password" required></label>
+          <label>New password<input id="newPassword" type="password" minlength="8" required></label>
+          <label>Confirm new password<input id="confirmPassword" type="password" minlength="8" required></label>
+          <label class="password-toggle"><input id="security-show-password" type="checkbox"> Show passwords</label>
+          <button class="btn-add" type="submit">Update password</button>
+          <div id="passwordMessage" class="sub-text" role="status"></div>
+        </form>
       </div>
     </section>
 

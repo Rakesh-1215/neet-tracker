@@ -269,6 +269,12 @@ function getWeekNumber(d) {
 }
 
 
+function roundHours(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.round((number + Number.EPSILON) * 100) / 100;
+}
+
 // Returns date as YYYY-MM-DD
 function getDateKey(date = new Date(), offset = 0) {
   const d = new Date(date);
@@ -817,6 +823,57 @@ app.post('/api/auth/logout', (req, res) => {
 app.use('/api', (req, res, next) => {
   if (req.path === '/health' || req.path.startsWith('/auth/')) return next();
   return requireAuth(req, res, next);
+});
+
+app.post('/api/auth/change-password', async (req, res) => {
+  const user = await authenticateRequest(req);
+  if (!user) return res.status(401).json({ error: 'Authentication required' });
+
+  const currentPassword = String(req.body?.currentPassword || '');
+  const newPassword = String(req.body?.newPassword || '');
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+  }
+
+  if (!passwordsMatch(currentPassword, user)) {
+    return res.status(401).json({ error: 'Current password is incorrect.' });
+  }
+
+  const password = hashPassword(newPassword);
+  if (useMongoDB) {
+    await UserModel.findByIdAndUpdate(user._id, password);
+  } else {
+    const users = localUsers();
+    const index = users.findIndex(item => item.id === user.id);
+    if (index >= 0) {
+      users[index] = { ...users[index], ...password };
+      saveLocalUsers(users);
+    }
+  }
+
+  res.json({ success: true, message: 'Password updated successfully.' });
+});
+
+app.get('/api/rankings', async (req, res) => {
+  const requestedDate = String(req.query.date || getDateKey()).trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) {
+    return res.status(400).json({ error: 'Use a date in YYYY-MM-DD format.' });
+  }
+
+  const users = useMongoDB ? await UserModel.find({}).lean() : localUsers();
+  const rankings = await Promise.all(users.map(async (user) => {
+    const ownerId = String(user._id || user.id);
+    const db = await readDB(ownerId, user.trackerType);
+    return {
+      userId: ownerId,
+      name: user.name || 'Study tracker user',
+      trackerType: user.trackerType || 'neet',
+      hours: roundHours(Number(db.dailyLog?.[requestedDate]) || 0)
+    };
+  }));
+
+  rankings.sort((a, b) => b.hours - a.hours || a.name.localeCompare(b.name));
+  res.json({ date: requestedDate, rankings: rankings.map((item, index) => ({ ...item, rank: index + 1 })) });
 });
 
 // ============================================================

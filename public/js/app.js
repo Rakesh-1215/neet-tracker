@@ -251,6 +251,46 @@ async function submitAuth(url, payload) {
 function initAuth() {
   document.body.classList.add("auth-required");
 
+  const bindPasswordToggle = (toggleId, inputIds) => {
+    document.getElementById(toggleId)?.addEventListener("change", (event) => {
+      inputIds.forEach((id) => {
+        const input = document.getElementById(id);
+        if (input) input.type = event.target.checked ? "text" : "password";
+      });
+    });
+  };
+  bindPasswordToggle("login-show-password", ["login-password"]);
+  bindPasswordToggle("register-show-password", ["register-password"]);
+  bindPasswordToggle("security-show-password", ["currentPassword", "newPassword", "confirmPassword"]);
+
+  document.getElementById("passwordForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = document.getElementById("passwordMessage");
+    const currentPassword = document.getElementById("currentPassword").value;
+    const newPassword = document.getElementById("newPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+    if (newPassword !== confirmPassword) {
+      message.textContent = "New passwords do not match.";
+      message.style.color = "#dc2626";
+      return;
+    }
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Unable to update password.");
+      message.textContent = "Password updated successfully.";
+      message.style.color = "#059669";
+      event.target.reset();
+    } catch (error) {
+      message.textContent = error.message;
+      message.style.color = "#dc2626";
+    }
+  });
+
   document.getElementById("logout-btn")?.addEventListener("click", async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.reload();
@@ -340,6 +380,7 @@ async function loadState() {
   }
   updateStreak();
   renderAll();
+  loadRankings();
   hideAppLoader();
   return true;
 }
@@ -396,6 +437,47 @@ function initTabs() {
       if (targetContent) targetContent.classList.add("active");
     });
   });
+}
+
+function renderRankings(data) {
+  const container = document.getElementById("rankingList");
+  const status = document.getElementById("rankingStatus");
+  if (!container) return;
+  const rankings = data?.rankings || [];
+  status.textContent = rankings.length
+    ? `Study time for ${data.date}`
+    : "No registered users have study time for this date yet.";
+  container.innerHTML = rankings.length
+    ? rankings.map((item) => `
+      <div class="ranking-row ${item.userId === currentUser?.id ? "ranking-me" : ""}">
+        <span class="ranking-position">${item.rank <= 3 ? ["🥇", "🥈", "🥉"][item.rank - 1] : `#${item.rank}`}</span>
+        <span class="ranking-name">${escapeHtml(item.name)}${item.userId === currentUser?.id ? " (You)" : ""}<small>${item.trackerType === "ca" ? "CA Foundation" : "NEET"}</small></span>
+        <strong>${formatHours(item.hours)}h</strong>
+      </div>
+    `).join("")
+    : '<div class="ranking-empty">No study time recorded for this date.</div>';
+}
+
+async function loadRankings(date = document.getElementById("rankingDate")?.value || getTodayDateKey()) {
+  const status = document.getElementById("rankingStatus");
+  if (!status) return;
+  status.textContent = "Loading rankings...";
+  try {
+    const response = await fetch(`/api/rankings?date=${encodeURIComponent(date)}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Unable to load rankings.");
+    renderRankings(data);
+  } catch (error) {
+    status.textContent = error.message;
+    document.getElementById("rankingList").innerHTML = "";
+  }
+}
+
+function initRankings() {
+  const input = document.getElementById("rankingDate");
+  if (!input) return;
+  input.value = getTodayDateKey();
+  input.addEventListener("change", () => loadRankings(input.value));
 }
 
 // Class Toggle inside Goals Tab
@@ -1783,6 +1865,7 @@ window.deleteTask = deleteTask;
 window.addEventListener("DOMContentLoaded", () => {
   initAuth();
   initTabs();
+  initRankings();
   initClassToggle();
   bindQuestionDirectInputs();
   bindSelectedDaySummary();
