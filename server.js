@@ -9,7 +9,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI;
 const AUTH_SECRET = process.env.AUTH_SECRET || 'local-development-auth-secret';
-const LEGACY_OWNER_EMAIL = (process.env.LEGACY_OWNER_EMAIL || '').trim().toLowerCase();
+const LEGACY_OWNER_EMAIL = (process.env.LEGACY_OWNER_EMAIL || '')
+  .trim()
+  .toLowerCase()
+  .replace(/^['"]|['"]$/g, '');
 const AUTH_COOKIE = 'neet_tracker_session';
 
 app.use(cors());
@@ -491,6 +494,11 @@ function mergeLegacyTrackerData(current, legacy) {
   return merged;
 }
 
+async function isLegacyOwner(owner, trackerType) {
+  if (!owner || trackerType === 'ca') return false;
+  return Boolean(LEGACY_OWNER_EMAIL && normalizeEmail(owner.email) === LEGACY_OWNER_EMAIL);
+}
+
 async function readDB(ownerId = null, trackerType = 'neet') {
 
   const stateKey = stateKeyFor(ownerId);
@@ -509,9 +517,9 @@ async function readDB(ownerId = null, trackerType = 'neet') {
 
         // The first configured legacy owner receives a copy of the existing
         // NEET tracker without deleting or mutating the legacy record.
-        if (ownerId && LEGACY_OWNER_EMAIL) {
+        if (ownerId) {
           const owner = await UserModel.findById(ownerId);
-          if (owner && owner.email === LEGACY_OWNER_EMAIL) {
+          if (await isLegacyOwner(owner, trackerType)) {
             const legacy = await StateModel.findOne({ key: 'main_db' });
             if (legacy) {
               initial = legacy.toObject();
@@ -533,11 +541,7 @@ async function readDB(ownerId = null, trackerType = 'neet') {
 
         // Repair an account created before migration was configured, but
         // never overwrite meaningful data already belonging to that user.
-        if (
-          trackerType !== 'ca' &&
-          owner && owner.email === LEGACY_OWNER_EMAIL &&
-          legacy && hasMeaningfulTrackerData(legacy.toObject())
-        ) {
+        if (await isLegacyOwner(owner, trackerType) && legacy && hasMeaningfulTrackerData(legacy.toObject())) {
           const migrated = mergeLegacyTrackerData(current, legacy.toObject());
           delete migrated._id;
           delete migrated.__v;
