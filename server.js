@@ -449,6 +449,48 @@ function hasMeaningfulTrackerData(data) {
   );
 }
 
+function mergeLegacyTrackerData(current, legacy) {
+  const merged = { ...current };
+  const mergeById = (left = [], right = []) => {
+    const items = new Map();
+    [...right, ...left].forEach((item) => {
+      const key = item?.id ?? JSON.stringify(item);
+      items.set(String(key), item);
+    });
+    return [...items.values()];
+  };
+
+  merged.tasks = mergeById(current.tasks, legacy.tasks);
+  merged.taskHistory = mergeById(current.taskHistory, legacy.taskHistory);
+  merged.customChapters = mergeById(current.customChapters, legacy.customChapters);
+  merged.mockTests = mergeById(current.mockTests, legacy.mockTests);
+  merged.dailyLog = { ...(legacy.dailyLog || {}), ...(current.dailyLog || {}) };
+  merged.questionLog = { ...(legacy.questionLog || {}), ...(current.questionLog || {}) };
+
+  merged.syllabusProgress = { ...(legacy.syllabusProgress || {}) };
+  Object.entries(current.syllabusProgress || {}).forEach(([chapterId, progress]) => {
+    const oldProgress = merged.syllabusProgress[chapterId] || {};
+    merged.syllabusProgress[chapterId] = {
+      ...oldProgress,
+      ...progress,
+      theory: Boolean(oldProgress.theory || progress?.theory),
+      ncert: Boolean(oldProgress.ncert || progress?.ncert),
+      pyq: Boolean(oldProgress.pyq || progress?.pyq),
+      revisions: Math.max(Number(oldProgress.revisions) || 0, Number(progress?.revisions) || 0)
+    };
+  });
+
+  const oldStreak = legacy.streakData || {};
+  const currentStreak = current.streakData || {};
+  merged.streakData = {
+    ...oldStreak,
+    ...currentStreak,
+    bestStreak: Math.max(Number(oldStreak.bestStreak) || 0, Number(currentStreak.bestStreak) || 0),
+    streakHistory: { ...(oldStreak.streakHistory || {}), ...(currentStreak.streakHistory || {}) }
+  };
+  return merged;
+}
+
 async function readDB(ownerId = null, trackerType = 'neet') {
 
   const stateKey = stateKeyFor(ownerId);
@@ -492,11 +534,11 @@ async function readDB(ownerId = null, trackerType = 'neet') {
         // Repair an account created before migration was configured, but
         // never overwrite meaningful data already belonging to that user.
         if (
+          trackerType !== 'ca' &&
           owner && owner.email === LEGACY_OWNER_EMAIL &&
-          !hasMeaningfulTrackerData(current) &&
           legacy && hasMeaningfulTrackerData(legacy.toObject())
         ) {
-          const migrated = legacy.toObject();
+          const migrated = mergeLegacyTrackerData(current, legacy.toObject());
           delete migrated._id;
           delete migrated.__v;
           doc = await StateModel.findOneAndUpdate(
