@@ -28,6 +28,7 @@
         <h2>Welcome back</h2>
         <label>Email<input id="login-email" type="email" autocomplete="email" required></label>
         <label>Password<div class="password-field"><input id="login-password" type="password" autocomplete="current-password" required><button class="password-toggle" type="button" data-password-target="login-password" aria-label="Show password">👁️</button></div></label>
+        <label class="password-checkbox"><input id="login-show-password" type="checkbox"> Show password</label>
         <button class="auth-submit" type="submit">Log in</button>
         <button class="auth-switch" id="show-register" type="button">Create a new account</button>
       </form>
@@ -37,6 +38,7 @@
         <label>Name<input id="register-name" type="text" autocomplete="name" required></label>
         <label>Email<input id="register-email" type="email" autocomplete="email" required></label>
         <label>Password<div class="password-field"><input id="register-password" type="password" minlength="8" autocomplete="new-password" required><button class="password-toggle" type="button" data-password-target="register-password" aria-label="Show password">👁️</button></div></label>
+        <label class="password-checkbox"><input id="register-show-password" type="checkbox"> Show password</label>
         <label>Preparation type
           <select id="register-tracker-type">
             <option value="neet">NEET</option>
@@ -430,6 +432,7 @@
           <label>Current password<div class="password-field"><input id="currentPassword" type="password" required><button class="password-toggle" type="button" data-password-target="currentPassword" aria-label="Show password">👁️</button></div></label>
           <label>New password<div class="password-field"><input id="newPassword" type="password" minlength="8" required><button class="password-toggle" type="button" data-password-target="newPassword" aria-label="Show password">👁️</button></div></label>
           <label>Confirm new password<div class="password-field"><input id="confirmPassword" type="password" minlength="8" required><button class="password-toggle" type="button" data-password-target="confirmPassword" aria-label="Show password">👁️</button></div></label>
+          <label class="password-checkbox"><input id="security-show-password" type="checkbox"> Show passwords</label>
           <button class="btn-add" type="submit">Update password</button>
           <div id="passwordMessage" class="sub-text" role="status"></div>
         </form>

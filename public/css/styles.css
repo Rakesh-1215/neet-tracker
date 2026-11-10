@@ -827,6 +827,8 @@ body.auth-required .auth-screen {
 .password-field { position: relative; display: flex; align-items: center; }
 .password-field input { width: 100%; padding-right: 44px; }
 .password-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; padding: 4px; cursor: pointer; font-size: 17px; line-height: 1; }
+.password-checkbox { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.password-checkbox input { width: auto; }
 .password-form { display: grid; gap: 12px; max-width: 520px; }
 .ranking-controls { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
 .ranking-controls input { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 9px; }

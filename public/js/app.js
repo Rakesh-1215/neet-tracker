@@ -261,6 +261,17 @@ function initAuth() {
       button.setAttribute("aria-label", isVisible ? "Show password" : "Hide password");
     });
   });
+  const bindCheckbox = (checkboxId, inputIds) => {
+    document.getElementById(checkboxId)?.addEventListener("change", (event) => {
+      inputIds.forEach((id) => {
+        const input = document.getElementById(id);
+        if (input) input.type = event.target.checked ? "text" : "password";
+      });
+    });
+  };
+  bindCheckbox("login-show-password", ["login-password"]);
+  bindCheckbox("register-show-password", ["register-password"]);
+  bindCheckbox("security-show-password", ["currentPassword", "newPassword", "confirmPassword"]);
 
   document.getElementById("passwordForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
