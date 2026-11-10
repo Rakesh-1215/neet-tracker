@@ -1406,6 +1406,7 @@ function bindTasksLogic() {
         subject,
         hrs,
         cls: currentSelectedClass,
+        createdOn: getTodayDateKey(),
         completed: false,
         completedOn: null,
       });
@@ -1414,6 +1415,7 @@ function bindTasksLogic() {
       document.getElementById("hrs").value = "";
       saveStateBackend();
       renderTasksAndHours();
+      renderTaskHistory();
     };
   }
 }
@@ -1448,6 +1450,7 @@ function toggleTask(id) {
 
     saveStateBackend();
     renderTasksAndHours();
+    renderTaskHistory();
     renderSelectedDaySummary();
     updateStreak();
   }
@@ -1465,6 +1468,7 @@ function deleteTask(id) {
     appState.db.tasks = appState.db.tasks.filter((t) => t.id !== id);
     saveStateBackend();
     renderTasksAndHours();
+    renderTaskHistory();
     renderSelectedDaySummary();
     updateStreak();
   }
@@ -1576,6 +1580,57 @@ function renderTasksAndHours() {
   }
 }
 
+function taskDateKey(task) {
+  return task.createdOn || task.date || task.completedOn || getTodayDateKey();
+}
+
+function formatTaskDate(dateKey) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateKey;
+  return `${date.toLocaleDateString(undefined, { weekday: "long" })}, ${date.toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })}`;
+}
+
+function renderTaskHistory() {
+  const container = document.getElementById("taskHistoryList");
+  if (!container) return;
+
+  const grouped = {};
+  (appState.db.tasks || []).forEach((task) => {
+    const dateKey = taskDateKey(task);
+    if (!grouped[dateKey]) grouped[dateKey] = [];
+    grouped[dateKey].push(task);
+  });
+
+  const dates = Object.keys(grouped).sort().reverse();
+  if (!dates.length) {
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">No tasks recorded yet.</div>';
+    return;
+  }
+
+  container.innerHTML = dates.map((dateKey) => `
+    <div class="task-history-day">
+      <div class="task-history-date">📅 ${formatTaskDate(dateKey)}</div>
+      ${grouped[dateKey].map((task) => `
+        <div class="task-item">
+          <div style="flex:1">
+            <span class="task-title ${task.completed ? "checked" : ""}">${escapeHtml(task.desc)}</span>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;">
+              <span>${escapeHtml(task.subject || "General")}</span> ·
+              <span>⏱ ${formatHours(task.hrs)}h</span> ·
+              <span>${task.completed ? `Completed ${task.completedOn || ""}` : "Pending"}</span>
+            </div>
+          </div>
+          <span style="font-size:11px; color:${task.completed ? "#10b981" : "#f59e0b"}; font-weight:700;">${task.completed ? "✓ Done" : "Pending"}</span>
+        </div>
+      `).join("")}
+    </div>
+  `).join("");
+}
+
 function updateBar(cls, val, goal) {
   const p = Math.min((val / goal) * 100, 100);
   const bar = document.getElementById(`bar${cls}`);
@@ -1612,8 +1667,6 @@ function bindBackupActions() {
             appState.db = data.db;
           }
         } catch (e) {
-          appState.db.tasks = [];
-
           appState.db.dailyLog = {};
 
           appState.db.questionLog = {};
@@ -1708,6 +1761,7 @@ function renderAll() {
   renderSyllabus();
   renderMockTests();
   renderTasksAndHours();
+  renderTaskHistory();
 }
 
 function escapeHtml(str) {

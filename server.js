@@ -841,10 +841,6 @@ app.get('/api/state', async (req, res) => {
       calculateLastWeekQuestions(db);
 
 
-    // Reset ONLY weekly tasks.
-    // Historical dailyLog/questionLog are preserved.
-    db.tasks = [];
-
     db.weekId = currentWeek;
 
     await writeDB(db, req.user.id);
@@ -1135,8 +1131,8 @@ app.post('/api/reset-week', async (req, res) => {
     getCurrentWeekStart();
 
 
-  // Remove ONLY current week's
-  // daily question and study-hour data.
+  // Remove ONLY current week's daily question and study-hour data.
+  // Tasks are historical records and must remain available by date.
   for (let i = 0; i < 7; i++) {
 
     const date =
@@ -1154,10 +1150,6 @@ app.post('/api/reset-week', async (req, res) => {
 
     delete db.questionLog[dateKey];
   }
-
-
-  // Reset weekly tasks
-  db.tasks = [];
 
 
   db.weekId =
