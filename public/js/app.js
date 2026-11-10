@@ -58,6 +58,7 @@ function ensureStateShape() {
 
   const db = appState.db;
   if (!Array.isArray(db.tasks)) db.tasks = [];
+  if (!Array.isArray(db.taskHistory)) db.taskHistory = [];
   if (!db.dailyLog || typeof db.dailyLog !== "object") db.dailyLog = {};
   if (!db.questionLog || typeof db.questionLog !== "object") db.questionLog = {};
   if (!db.syllabusProgress || typeof db.syllabusProgress !== "object") db.syllabusProgress = {};
@@ -251,16 +252,6 @@ async function submitAuth(url, payload) {
 function initAuth() {
   document.body.classList.add("auth-required");
 
-  document.querySelectorAll(".password-toggle[data-password-target]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const input = document.getElementById(button.dataset.passwordTarget);
-      if (!input) return;
-      const isVisible = input.type === "text";
-      input.type = isVisible ? "password" : "text";
-      button.textContent = isVisible ? "👁️" : "🙈";
-      button.setAttribute("aria-label", isVisible ? "Show password" : "Hide password");
-    });
-  });
   const bindCheckbox = (checkboxId, inputIds) => {
     document.getElementById(checkboxId)?.addEventListener("change", (event) => {
       inputIds.forEach((id) => {
@@ -1558,6 +1549,7 @@ function deleteTask(id) {
       ));
     }
     appState.db.tasks = appState.db.tasks.filter((t) => t.id !== id);
+    appState.db.taskHistory.push({ ...task, archivedOn: getTodayDateKey() });
     saveStateBackend();
     renderTasksAndHours();
     renderTaskHistory();
@@ -1691,7 +1683,7 @@ function renderTaskHistory() {
   if (!container) return;
 
   const grouped = {};
-  (appState.db.tasks || []).forEach((task) => {
+  [...(appState.db.taskHistory || []), ...(appState.db.tasks || [])].forEach((task) => {
     const dateKey = taskDateKey(task);
     if (!grouped[dateKey]) grouped[dateKey] = [];
     grouped[dateKey].push(task);

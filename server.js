@@ -28,6 +28,7 @@ const stateSchema = new mongoose.Schema({
   ownerId: { type: String, default: null, index: true },
   weekId: Number,
   tasks: Array,
+  taskHistory: Array,
   dailyLog: Object,
   questionLog: Object,
   syllabusProgress: Object,
@@ -379,6 +380,7 @@ function createInitialDB(trackerType = 'neet') {
     weekId: currentWeek,
 
     tasks: [],
+    taskHistory: [],
 
     // Date-based study hours
     dailyLog: {},
@@ -597,6 +599,10 @@ async function readDB(ownerId = null, trackerType = 'neet') {
 
     if (!data.customChapters) {
       data.customChapters = [];
+    }
+
+    if (!Array.isArray(data.taskHistory)) {
+      data.taskHistory = [];
     }
 
     if (!data.dailyLog) {
@@ -863,13 +869,23 @@ app.get('/api/rankings', async (req, res) => {
   const users = useMongoDB ? await UserModel.find({}).lean() : localUsers();
   const rankings = await Promise.all(users.map(async (user) => {
     const ownerId = String(user._id || user.id);
-    const db = await readDB(ownerId, user.trackerType);
-    return {
-      userId: ownerId,
-      name: user.name || 'Study tracker user',
-      trackerType: user.trackerType || 'neet',
-      hours: roundHours(Number(db.dailyLog?.[requestedDate]) || 0)
-    };
+    try {
+      const db = await readDB(ownerId, user.trackerType);
+      return {
+        userId: ownerId,
+        name: user.name || 'Study tracker user',
+        trackerType: user.trackerType || 'neet',
+        hours: roundHours(Number(db.dailyLog?.[requestedDate]) || 0)
+      };
+    } catch (error) {
+      console.error(`Ranking read failed for user ${ownerId}:`, error);
+      return {
+        userId: ownerId,
+        name: user.name || 'Study tracker user',
+        trackerType: user.trackerType || 'neet',
+        hours: 0
+      };
+    }
   }));
 
   rankings.sort((a, b) => b.hours - a.hours || a.name.localeCompare(b.name));
