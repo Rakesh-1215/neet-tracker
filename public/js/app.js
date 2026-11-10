@@ -251,17 +251,16 @@ async function submitAuth(url, payload) {
 function initAuth() {
   document.body.classList.add("auth-required");
 
-  const bindPasswordToggle = (toggleId, inputIds) => {
-    document.getElementById(toggleId)?.addEventListener("change", (event) => {
-      inputIds.forEach((id) => {
-        const input = document.getElementById(id);
-        if (input) input.type = event.target.checked ? "text" : "password";
-      });
+  document.querySelectorAll(".password-toggle[data-password-target]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const input = document.getElementById(button.dataset.passwordTarget);
+      if (!input) return;
+      const isVisible = input.type === "text";
+      input.type = isVisible ? "password" : "text";
+      button.textContent = isVisible ? "👁️" : "🙈";
+      button.setAttribute("aria-label", isVisible ? "Show password" : "Hide password");
     });
-  };
-  bindPasswordToggle("login-show-password", ["login-password"]);
-  bindPasswordToggle("register-show-password", ["register-password"]);
-  bindPasswordToggle("security-show-password", ["currentPassword", "newPassword", "confirmPassword"]);
+  });
 
   document.getElementById("passwordForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
